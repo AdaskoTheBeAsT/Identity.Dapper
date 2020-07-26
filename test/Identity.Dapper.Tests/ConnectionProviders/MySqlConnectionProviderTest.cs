@@ -1,4 +1,4 @@
-﻿using Identity.Dapper.Cryptography;
+using Identity.Dapper.Cryptography;
 using Identity.Dapper.Models;
 using Identity.Dapper.MySQL.Connections;
 using Microsoft.Extensions.Logging;
@@ -14,18 +14,18 @@ namespace Identity.Dapper.Tests.ConnectionProviders
         private readonly string _iv = "SomeReallyCoolIV";                   // 16 bytes vector for AES256
 
         private readonly Mock<ILogger<EncryptionHelper>> _mockLogger;
-        private readonly Mock<IOptions<AESKeys>> _mockKeys;
+        private readonly Mock<IOptions<AesKeys>> _mockKeys;
         private readonly EncryptionHelper _encryptionHelper;
 
         public MySqlConnectionProviderTest()
         {
             _mockLogger = new Mock<ILogger<EncryptionHelper>>();
-            _mockKeys = new Mock<IOptions<AESKeys>>();
+            _mockKeys = new Mock<IOptions<AesKeys>>();
 
-            var aesKeys = new AESKeys
+            var aesKeys = new AesKeys
             {
                 Key = EncryptionHelper.Base64Encode(_key),
-                IV = EncryptionHelper.Base64Encode(_iv)
+                IV = EncryptionHelper.Base64Encode(_iv),
             };
             _mockKeys.Setup(x => x.Value).Returns(aesKeys);
             _encryptionHelper = new EncryptionHelper(_mockKeys.Object, _mockLogger.Object);
@@ -39,7 +39,7 @@ namespace Identity.Dapper.Tests.ConnectionProviders
             {
                 ConnectionString = connectionString,
                 Username = "testUsername",
-                Password = "testPassword"
+                Password = "testPassword",
             };
             var mock = new Mock<IOptions<ConnectionProviderOptions>>();
             mock.Setup(x => x.Value).Returns(options);
@@ -60,7 +60,7 @@ namespace Identity.Dapper.Tests.ConnectionProviders
             {
                 ConnectionString = connectionString,
                 Username = "testUsername",
-                Password = "U29tZVJlYWxseUNvb2xJVqkPdV+l1d6/7cks09hR9PY="
+                Password = "U29tZVJlYWxseUNvb2xJVqkPdV+l1d6/7cks09hR9PY=",
             };
             var mock = new Mock<IOptions<ConnectionProviderOptions>>();
             mock.Setup(x => x.Value).Returns(options);
@@ -80,8 +80,8 @@ namespace Identity.Dapper.Tests.ConnectionProviders
             var options = new ConnectionProviderOptions
             {
                 ConnectionString = connectionString,
-                Username = "",
-                Password = ""
+                Username = string.Empty,
+                Password = string.Empty,
             };
             var mock = new Mock<IOptions<ConnectionProviderOptions>>();
             mock.Setup(x => x.Value).Returns(options);
@@ -92,6 +92,5 @@ namespace Identity.Dapper.Tests.ConnectionProviders
             // connection string should be unchanged
             Assert.Equal(connection.ConnectionString, connectionString);
         }
-
     }
 }

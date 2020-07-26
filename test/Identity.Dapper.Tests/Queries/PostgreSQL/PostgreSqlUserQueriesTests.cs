@@ -1,4 +1,4 @@
-﻿using Identity.Dapper.Entities;
+using Identity.Dapper.Entities;
 using Identity.Dapper.Factories;
 using Identity.Dapper.Factories.Contracts;
 using Identity.Dapper.PostgreSQL.Models;
@@ -13,6 +13,7 @@ namespace Identity.Dapper.Tests.Queries.PostgreSQL
     public class PostgreSqlUserQueriesTests
     {
         private readonly IQueryFactory _queryFactory;
+
         public PostgreSqlUserQueriesTests()
         {
             var services = new ServiceCollection();
@@ -26,7 +27,7 @@ namespace Identity.Dapper.Tests.Queries.PostgreSQL
             })
                    .AddDapperIdentityFor<PostgreSqlConfiguration>();
 
-            var serviceProvider = services.BuildServiceProvider();
+            using var serviceProvider = services.BuildServiceProvider();
 
             var queryList = new QueryList(serviceProvider);
 

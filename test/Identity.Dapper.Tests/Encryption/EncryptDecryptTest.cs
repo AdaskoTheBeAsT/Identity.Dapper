@@ -1,4 +1,4 @@
-﻿using Identity.Dapper.Cryptography;
+using Identity.Dapper.Cryptography;
 using Identity.Dapper.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -13,16 +13,17 @@ namespace Identity.Dapper.Tests.Encryption
         private readonly string _iv = "SomeReallyCoolIV";                   // 16 bytes vector for AES256
 
         private readonly Mock<ILogger<EncryptionHelper>> _mockLogger;
-        private readonly Mock<IOptions<AESKeys>> _mockKeys;
+        private readonly Mock<IOptions<AesKeys>> _mockKeys;
+
         public EncryptDecryptTest()
         {
             _mockLogger = new Mock<ILogger<EncryptionHelper>>();
-            _mockKeys = new Mock<IOptions<AESKeys>>();
+            _mockKeys = new Mock<IOptions<AesKeys>>();
 
-            var aesKeys = new AESKeys
+            var aesKeys = new AesKeys
             {
                 Key = EncryptionHelper.Base64Encode(_key),
-                IV = EncryptionHelper.Base64Encode(_iv)
+                IV = EncryptionHelper.Base64Encode(_iv),
             };
             _mockKeys.Setup(x => x.Value).Returns(aesKeys);
         }
@@ -44,10 +45,10 @@ namespace Identity.Dapper.Tests.Encryption
         public void InvalidKeyAndIvReturnSameInput()
         {
             const string textToEncrypt = "I hope I come out whole!";
-            var aesKeys = new AESKeys
+            var aesKeys = new AesKeys
             {
-                Key = "",
-                IV = ""
+                Key = string.Empty,
+                IV = string.Empty,
             };
 
             _mockKeys.Setup(x => x.Value)

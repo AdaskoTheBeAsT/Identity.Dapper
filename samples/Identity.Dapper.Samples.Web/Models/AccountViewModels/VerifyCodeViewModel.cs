@@ -1,20 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Identity.Dapper.Samples.Web.Models.AccountViewModels
 {
     public class VerifyCodeViewModel
     {
         [Required]
-        public string Provider { get; set; }
+        public string? Provider { get; set; }
 
         [Required]
-        public string Code { get; set; }
+        public string? Code { get; set; }
 
-        public string ReturnUrl { get; set; }
+#pragma warning disable CA1056 // Uri properties should not be strings
+        public string? ReturnUrl { get; set; }
+#pragma warning restore CA1056 // Uri properties should not be strings
 
         [Display(Name = "Remember this browser?")]
         public bool RememberBrowser { get; set; }

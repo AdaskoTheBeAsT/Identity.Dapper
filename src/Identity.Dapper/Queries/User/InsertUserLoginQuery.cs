@@ -1,13 +1,14 @@
-﻿using Identity.Dapper.Models;
-using Identity.Dapper.Queries.Contracts;
 using System.Collections.Generic;
 using System.Linq;
+using Identity.Dapper.Models;
+using Identity.Dapper.Queries.Contracts;
 
 namespace Identity.Dapper.Queries.User
 {
     public class InsertUserLoginQuery : IInsertQuery
     {
         private readonly SqlConfiguration _sqlConfiguration;
+
         public InsertUserLoginQuery(SqlConfiguration sqlConfiguration)
         {
             _sqlConfiguration = sqlConfiguration;
@@ -21,10 +22,11 @@ namespace Identity.Dapper.Queries.User
             valuesArray = valuesArray.InsertQueryValuesFragment(_sqlConfiguration.ParameterNotation, columns);
 
             var query = _sqlConfiguration.InsertUserLoginQuery
-                                         .ReplaceInsertQueryParameters(_sqlConfiguration.SchemaName,
-                                                                       _sqlConfiguration.UserLoginTable,
-                                                                       columns.GetCommaSeparatedColumns(),
-                                                                       string.Join(", ", valuesArray));
+                .ReplaceInsertQueryParameters(
+                    _sqlConfiguration.SchemaName,
+                    _sqlConfiguration.UserLoginTable,
+                    columns.GetCommaSeparatedColumns(),
+                    string.Join(", ", valuesArray));
 
             return query;
         }

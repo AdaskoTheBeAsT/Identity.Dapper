@@ -1,4 +1,3 @@
-﻿using System;
 using System.Data.Common;
 using System.Threading.Tasks;
 
@@ -10,27 +9,23 @@ namespace Identity.Dapper
         {
             var tcs = new TaskCompletionSource<bool>();
 
-            Task.Run(async () =>
-            {
-                try
+            Task.Run(
+                async () =>
                 {
                     while (conn.State != System.Data.ConnectionState.Open)
                     {
-                        if (conn.State != System.Data.ConnectionState.Connecting || conn.State != System.Data.ConnectionState.Executing || conn.State != System.Data.ConnectionState.Fetching)
+                        if (conn.State != System.Data.ConnectionState.Connecting ||
+                            conn.State != System.Data.ConnectionState.Executing ||
+                            conn.State != System.Data.ConnectionState.Fetching)
                         {
                             conn.ConnectionString = connString;
 
-                            await conn.OpenAsync();
+                            await conn.OpenAsync().ConfigureAwait(false);
                         }
                     }
-                }
-                catch (Exception)
-                {
-                    throw;
-                }
 
-                tcs.SetResult(true);
-            });
+                    tcs.SetResult(true);
+                });
 
             return tcs.Task;
         }

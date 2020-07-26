@@ -1,4 +1,4 @@
-﻿using Identity.Dapper.Models;
+using Identity.Dapper.Models;
 using Identity.Dapper.Queries.Contracts;
 
 namespace Identity.Dapper.Queries.Role
@@ -6,6 +6,7 @@ namespace Identity.Dapper.Queries.Role
     public class SelectRoleByNameQuery : ISelectQuery
     {
         private readonly SqlConfiguration _sqlConfiguration;
+
         public SelectRoleByNameQuery(SqlConfiguration sqlConfiguration)
         {
             _sqlConfiguration = sqlConfiguration;
@@ -14,11 +15,12 @@ namespace Identity.Dapper.Queries.Role
         public string GetQuery()
         {
             var query = _sqlConfiguration.SelectRoleByNameQuery
-                                         .ReplaceQueryParameters(_sqlConfiguration.SchemaName,
-                                                                 _sqlConfiguration.RoleTable,
-                                                                 _sqlConfiguration.ParameterNotation,
-                                                                 new string[] { "%NAME%" },
-                                                                 new string[] { "Name" });
+                .ReplaceQueryParameters(
+                    _sqlConfiguration.SchemaName,
+                    _sqlConfiguration.RoleTable,
+                    _sqlConfiguration.ParameterNotation,
+                    new string[] { "%NAME%" },
+                    new string[] { "Name" });
 
             return query;
         }

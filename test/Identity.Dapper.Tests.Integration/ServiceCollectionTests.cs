@@ -1,4 +1,6 @@
-﻿using Identity.Dapper.Connections;
+using System;
+using System.IO;
+using Identity.Dapper.Connections;
 using Identity.Dapper.Entities;
 using Identity.Dapper.Models;
 using Identity.Dapper.SqlServer.Connections;
@@ -7,8 +9,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using System;
-using System.IO;
 using Xunit;
 
 namespace Identity.Dapper.Tests.Integration
@@ -16,6 +16,7 @@ namespace Identity.Dapper.Tests.Integration
     public class ServiceCollectionTests
     {
         private readonly IServiceCollection _serviceCollection;
+
         public ServiceCollectionTests()
         {
             _serviceCollection = new ServiceCollection();
@@ -33,7 +34,7 @@ namespace Identity.Dapper.Tests.Integration
 
             _serviceCollection.ConfigureDapperConnectionProvider<SqlServerConnectionProvider>(builder.GetSection("DapperIdentity"))
                               .ConfigureDapperIdentityCryptography(builder.GetSection("DapperIdentityCryptography"))
-                              .ConfigureDapperIdentityOptions(new DapperIdentityOptions { UseTransactionalBehavior = false }); //Change to True to use Transactions in all operations
+                              .ConfigureDapperIdentityOptions(new DapperIdentityOptions { UseTransactionalBehavior = false }); // Change to True to use Transactions in all operations
 
             _serviceCollection.AddIdentity<DapperIdentityUser, DapperIdentityRole>(x =>
             {
@@ -46,7 +47,7 @@ namespace Identity.Dapper.Tests.Integration
                               .AddDapperIdentityFor<SqlServerConfiguration>()
                               .AddDefaultTokenProviders();
 
-            var serviceProvider = _serviceCollection.BuildServiceProvider(false);
+            using var serviceProvider = _serviceCollection.BuildServiceProvider(false);
 
             var provider = serviceProvider.GetService<IConnectionProvider>();
             var options = serviceProvider.GetService<IOptions<ConnectionProviderOptions>>();
@@ -67,7 +68,7 @@ namespace Identity.Dapper.Tests.Integration
 
             _serviceCollection.ConfigureDapperConnectionProvider<SqlServerConnectionProvider>(builder.GetSection("ConnectionStrings"))
                               .ConfigureDapperIdentityCryptography(builder.GetSection("DapperIdentityCryptography"))
-                              .ConfigureDapperIdentityOptions(new DapperIdentityOptions { UseTransactionalBehavior = false }); //Change to True to use Transactions in all operations
+                              .ConfigureDapperIdentityOptions(new DapperIdentityOptions { UseTransactionalBehavior = false }); // Change to True to use Transactions in all operations
 
             _serviceCollection.AddIdentity<DapperIdentityUser, DapperIdentityRole>(x =>
             {
@@ -80,7 +81,7 @@ namespace Identity.Dapper.Tests.Integration
                               .AddDapperIdentityFor<SqlServerConfiguration>()
                               .AddDefaultTokenProviders();
 
-            var serviceProvider = _serviceCollection.BuildServiceProvider(false);
+            using var serviceProvider = _serviceCollection.BuildServiceProvider(false);
 
             var provider = serviceProvider.GetService<IConnectionProvider>();
             var options = serviceProvider.GetService<IOptions<ConnectionProviderOptions>>();
@@ -101,7 +102,7 @@ namespace Identity.Dapper.Tests.Integration
 
             _serviceCollection.ConfigureDapperConnectionProvider<SqlServerConnectionProvider>(builder.GetSection("ConnectionStrings"))
                               .ConfigureDapperIdentityCryptography(builder.GetSection("DapperIdentityCryptography"))
-                              .ConfigureDapperIdentityOptions(new DapperIdentityOptions { UseTransactionalBehavior = false }); //Change to True to use Transactions in all operations
+                              .ConfigureDapperIdentityOptions(new DapperIdentityOptions { UseTransactionalBehavior = false }); // Change to True to use Transactions in all operations
 
             _serviceCollection.AddIdentity<DapperIdentityUser, DapperIdentityRole>(x =>
             {
@@ -114,7 +115,7 @@ namespace Identity.Dapper.Tests.Integration
                               .AddDapperIdentityFor<SqlServerConfiguration>()
                               .AddDefaultTokenProviders();
 
-            var serviceProvider = _serviceCollection.BuildServiceProvider(false);
+            using var serviceProvider = _serviceCollection.BuildServiceProvider(false);
 
             var provider = serviceProvider.GetService<IConnectionProvider>();
             var options = serviceProvider.GetService<IOptions<ConnectionProviderOptions>>();

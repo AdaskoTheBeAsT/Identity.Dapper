@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Xunit.Abstractions;
 using Xunit.Sdk;
 
@@ -18,7 +17,7 @@ namespace Identity.Dapper.Tests.Integration
 
             foreach (TTestCase testCase in testCases)
             {
-                var attribute = testCase.TestMethod.Method.GetCustomAttributes((typeof(TestPriorityAttribute).AssemblyQualifiedName))
+                var attribute = testCase.TestMethod.Method.GetCustomAttributes(typeof(TestPriorityAttribute).AssemblyQualifiedName)
                                                           .FirstOrDefault();
 
                 var priority = attribute.GetNamedArgument<int>("Priority");
@@ -29,12 +28,14 @@ namespace Identity.Dapper.Tests.Integration
         }
     }
 
+    [AttributeUsage(AttributeTargets.Method)]
     public sealed class TestPriorityAttribute : Attribute
     {
-        public int Priority { get; set; }
-        public TestPriorityAttribute(int Priority)
+        public TestPriorityAttribute(int priority)
         {
-            this.Priority = Priority;
+            this.Priority = priority;
         }
+
+        public int Priority { get; set; }
     }
 }

@@ -1,16 +1,18 @@
-﻿using Identity.Dapper.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Identity.Dapper.Entities;
 
 namespace Identity.Dapper.Samples.Web.Entities
 {
     public class CustomUser : DapperIdentityUser
     {
-        public string Address { get; set; }
+        public CustomUser()
+        {
+        }
 
-        public CustomUser() { }
-        public CustomUser(string userName) : base(userName) { }
+        public CustomUser(string userName)
+            : base(userName)
+        {
+        }
+
+        public string? Address { get; set; }
     }
 }

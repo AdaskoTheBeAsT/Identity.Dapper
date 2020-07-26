@@ -45,7 +45,7 @@ namespace Identity.Dapper.MySQL.Models
             UserRoleTable = "`identityuserrole`";
             UserLoginTable = "`identitylogin`";
             RoleClaimTable = "`identityroleclaim`";
-            
+
             SqlMapper.AddTypeHandler(new TypeHandlers.MySqlDateTimeOffsetHandler());
         }
     }

@@ -1,4 +1,10 @@
-﻿using Dapper;
+using System;
+using System.Collections.Generic;
+using System.Data.Common;
+using System.Security.Claims;
+using System.Threading;
+using System.Threading.Tasks;
+using Dapper;
 using Identity.Dapper.Connections;
 using Identity.Dapper.Entities;
 using Identity.Dapper.Factories.Contracts;
@@ -7,19 +13,13 @@ using Identity.Dapper.Queries.Role;
 using Identity.Dapper.Repositories.Contracts;
 using Identity.Dapper.UnitOfWork.Contracts;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Data.Common;
-using System.Security.Claims;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Identity.Dapper.Repositories
 {
     public class RoleRepository<TRole, TKey, TUserRole, TRoleClaim>
         : IRoleRepository<TRole, TKey, TUserRole, TRoleClaim>
         where TRole : DapperIdentityRole<TKey, TUserRole, TRoleClaim>
-        where TKey : IEquatable<TKey>
+        where TKey : struct, IEquatable<TKey>
         where TUserRole : DapperIdentityUserRole<TKey>
         where TRoleClaim : DapperIdentityRoleClaim<TKey>
     {
@@ -28,6 +28,7 @@ namespace Identity.Dapper.Repositories
         private readonly SqlConfiguration _sqlConfiguration;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IQueryFactory _queryFactory;
+
         public RoleRepository(IConnectionProvider connectionProvider, ILogger<RoleRepository<TRole, TKey, TUserRole, TRoleClaim>> log, SqlConfiguration sqlConfiguration, IUnitOfWork unitOfWork, IQueryFactory queryFactory)
         {
             _connectionProvider = connectionProvider;
@@ -48,25 +49,25 @@ namespace Identity.Dapper.Repositories
 
                     var query = _queryFactory.GetQuery<SelectRoleByIdQuery>();
 
-                    return await x.QueryFirstOrDefaultAsync<TRole>(sql: query,
-                                                                   param: dynamicParameters,
-                                                                   transaction: _unitOfWork.Transaction);
+                    return await x.QueryFirstOrDefaultAsync<TRole>(
+                        sql: query,
+                        param: dynamicParameters,
+                        transaction: _unitOfWork.Transaction).ConfigureAwait(false);
                 });
 
-                DbConnection conn = null;
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (conn = _connectionProvider.Create())
+                    using (var conn = _connectionProvider.Create())
                     {
-                        await conn.OpenAsync();
+                        await conn.OpenAsync().ConfigureAwait(false);
 
-                        return await selectFunction(conn);
+                        return await selectFunction(conn).ConfigureAwait(false);
                     }
                 }
                 else
                 {
-                    conn = _unitOfWork.CreateOrGetConnection();
-                    return await selectFunction(conn);
+                    var conn = _unitOfWork.CreateOrGetConnection();
+                    return await selectFunction(conn).ConfigureAwait(false);
                 }
             }
             catch (Exception ex)
@@ -88,26 +89,27 @@ namespace Identity.Dapper.Repositories
 
                     var query = _queryFactory.GetQuery<SelectRoleByNameQuery>();
 
-                    return await x.QueryFirstOrDefaultAsync<TRole>(sql: query,
-                                                                   param: dynamicParameters,
-                                                                   transaction: _unitOfWork.Transaction);
+                    return await x.QueryFirstOrDefaultAsync<TRole>(
+                        sql: query,
+                        param: dynamicParameters,
+                        transaction: _unitOfWork.Transaction)
+                        .ConfigureAwait(false);
                 });
 
-                DbConnection conn = null;
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (conn = _connectionProvider.Create())
+                    using (var conn = _connectionProvider.Create())
                     {
-                        await conn.OpenAsync();
+                        await conn.OpenAsync().ConfigureAwait(false);
 
-                        return await selectFunction(conn);
+                        return await selectFunction(conn).ConfigureAwait(false);
                     }
                 }
                 else
                 {
-                    conn = _unitOfWork.CreateOrGetConnection();
+                    var conn = _unitOfWork.CreateOrGetConnection();
 
-                    return await selectFunction(conn);
+                    return await selectFunction(conn).ConfigureAwait(false);
                 }
             }
             catch (Exception ex)
@@ -120,6 +122,11 @@ namespace Identity.Dapper.Repositories
 
         public async Task<IEnumerable<TRoleClaim>> GetClaimsByRole(TRole role, CancellationToken cancellationToken)
         {
+            if (role is null)
+            {
+                throw new ArgumentNullException(nameof(role));
+            }
+
             try
             {
                 var selectFunction = new Func<DbConnection, Task<IEnumerable<TRoleClaim>>>(async x =>
@@ -129,25 +136,26 @@ namespace Identity.Dapper.Repositories
 
                     var query = _queryFactory.GetQuery<GetClaimsByRoleQuery>();
 
-                    return await x.QueryAsync<TRoleClaim>(sql: query,
-                                                          param: dynamicParameters,
-                                                          transaction: _unitOfWork.Transaction);
+                    return await x.QueryAsync<TRoleClaim>(
+                        sql: query,
+                        param: dynamicParameters,
+                        transaction: _unitOfWork.Transaction)
+                        .ConfigureAwait(false);
                 });
 
-                DbConnection conn = null;
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (conn = _connectionProvider.Create())
+                    using (var conn = _connectionProvider.Create())
                     {
-                        await conn.OpenAsync();
+                        await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                        return await selectFunction(conn);
+                        return await selectFunction(conn).ConfigureAwait(false);
                     }
                 }
                 else
                 {
-                    conn = _unitOfWork.CreateOrGetConnection();
-                    return await selectFunction(conn);
+                    var conn = _unitOfWork.CreateOrGetConnection();
+                    return await selectFunction(conn).ConfigureAwait(false);
                 }
             }
             catch (Exception ex)
@@ -168,25 +176,24 @@ namespace Identity.Dapper.Repositories
 
                     var query = _queryFactory.GetInsertQuery<InsertRoleQuery, TRole>(role);
 
-                    var result = await x.ExecuteAsync(query, dynamicParameters, _unitOfWork.Transaction);
+                    var result = await x.ExecuteAsync(query, dynamicParameters, _unitOfWork.Transaction).ConfigureAwait(false);
 
                     return result > 0;
                 });
 
-                DbConnection conn = null;
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (conn = _connectionProvider.Create())
+                    using (var conn = _connectionProvider.Create())
                     {
-                        await conn.OpenAsync(cancellationToken);
+                        await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                        return await insertFunction(conn);
+                        return await insertFunction(conn).ConfigureAwait(false);
                     }
                 }
                 else
                 {
-                    conn = _unitOfWork.CreateOrGetConnection();
-                    return await insertFunction(conn);
+                    var conn = _unitOfWork.CreateOrGetConnection();
+                    return await insertFunction(conn).ConfigureAwait(false);
                 }
             }
             catch (Exception ex)
@@ -199,6 +206,16 @@ namespace Identity.Dapper.Repositories
 
         public async Task<bool> InsertClaimAsync(TRole role, Claim claim, CancellationToken cancellationToken)
         {
+            if (role is null)
+            {
+                throw new ArgumentNullException(nameof(role));
+            }
+
+            if (claim is null)
+            {
+                throw new ArgumentNullException(nameof(claim));
+            }
+
             try
             {
                 var insertFunction = new Func<DbConnection, Task<bool>>(async x =>
@@ -212,25 +229,24 @@ namespace Identity.Dapper.Repositories
 
                     var query = _queryFactory.GetInsertQuery<InsertRoleClaimQuery, TRoleClaim>(roleClaim);
 
-                    var result = await x.ExecuteAsync(query, dynamicParameters, _unitOfWork.Transaction);
+                    var result = await x.ExecuteAsync(query, dynamicParameters, _unitOfWork.Transaction).ConfigureAwait(false);
 
                     return result > 0;
                 });
 
-                DbConnection conn = null;
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (conn = _connectionProvider.Create())
+                    using (var conn = _connectionProvider.Create())
                     {
-                        await conn.OpenAsync(cancellationToken);
+                        await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                        return await insertFunction(conn);
+                        return await insertFunction(conn).ConfigureAwait(false);
                     }
                 }
                 else
                 {
-                    conn = _unitOfWork.CreateOrGetConnection();
-                    return await insertFunction(conn);
+                    var conn = _unitOfWork.CreateOrGetConnection();
+                    return await insertFunction(conn).ConfigureAwait(false);
                 }
             }
             catch (Exception ex)
@@ -252,25 +268,24 @@ namespace Identity.Dapper.Repositories
 
                     var query = _queryFactory.GetDeleteQuery<DeleteRoleQuery>();
 
-                    var result = await x.ExecuteAsync(query, dynamicParameters, _unitOfWork.Transaction);
+                    var result = await x.ExecuteAsync(query, dynamicParameters, _unitOfWork.Transaction).ConfigureAwait(false);
 
                     return result > 0;
                 });
 
-                DbConnection conn = null;
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (conn = _connectionProvider.Create())
+                    using (var conn = _connectionProvider.Create())
                     {
-                        await conn.OpenAsync(cancellationToken);
+                        await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                        return await removeFunction(conn);
+                        return await removeFunction(conn).ConfigureAwait(false);
                     }
                 }
                 else
                 {
-                    conn = _unitOfWork.CreateOrGetConnection();
-                    return await removeFunction(conn);
+                    var conn = _unitOfWork.CreateOrGetConnection();
+                    return await removeFunction(conn).ConfigureAwait(false);
                 }
             }
             catch (Exception ex)
@@ -283,6 +298,16 @@ namespace Identity.Dapper.Repositories
 
         public async Task<bool> RemoveClaimAsync(TRole role, Claim claim, CancellationToken cancellationToken)
         {
+            if (role is null)
+            {
+                throw new ArgumentNullException(nameof(role));
+            }
+
+            if (claim is null)
+            {
+                throw new ArgumentNullException(nameof(claim));
+            }
+
             try
             {
                 var removeFunction = new Func<DbConnection, Task<bool>>(async x =>
@@ -294,25 +319,24 @@ namespace Identity.Dapper.Repositories
 
                     var query = _queryFactory.GetDeleteQuery<DeleteRoleClaimQuery>();
 
-                    var result = await x.ExecuteAsync(query, dynamicParameters, _unitOfWork.Transaction);
+                    var result = await x.ExecuteAsync(query, dynamicParameters, _unitOfWork.Transaction).ConfigureAwait(false);
 
                     return result > 0;
                 });
 
-                DbConnection conn = null;
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (conn = _connectionProvider.Create())
+                    using (var conn = _connectionProvider.Create())
                     {
-                        await conn.OpenAsync(cancellationToken);
+                        await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                        return await removeFunction(conn);
+                        return await removeFunction(conn).ConfigureAwait(false);
                     }
                 }
                 else
                 {
-                    conn = _unitOfWork.CreateOrGetConnection();
-                    return await removeFunction(conn);
+                    var conn = _unitOfWork.CreateOrGetConnection();
+                    return await removeFunction(conn).ConfigureAwait(false);
                 }
             }
             catch (Exception ex)
@@ -325,6 +349,11 @@ namespace Identity.Dapper.Repositories
 
         public async Task<bool> UpdateAsync(TRole role, CancellationToken cancellationToken)
         {
+            if (role is null)
+            {
+                throw new ArgumentNullException(nameof(role));
+            }
+
             try
             {
                 var updateFunction = new Func<DbConnection, Task<bool>>(async x =>
@@ -333,24 +362,23 @@ namespace Identity.Dapper.Repositories
 
                     var query = _queryFactory.GetUpdateQuery<UpdateRoleQuery, TRole>(role);
 
-                    var result = await x.ExecuteAsync(query, dynamicParameters, _unitOfWork.Transaction);
+                    var result = await x.ExecuteAsync(query, dynamicParameters, _unitOfWork.Transaction).ConfigureAwait(false);
 
                     return result > 0;
                 });
 
-                DbConnection conn = null;
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (conn = _connectionProvider.Create())
+                    using (var conn = _connectionProvider.Create())
                     {
-                        await conn.OpenAsync(cancellationToken);
-                        return await updateFunction(conn);
+                        await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
+                        return await updateFunction(conn).ConfigureAwait(false);
                     }
                 }
                 else
                 {
-                    conn = _unitOfWork.CreateOrGetConnection();
-                    return await updateFunction(conn);
+                    var conn = _unitOfWork.CreateOrGetConnection();
+                    return await updateFunction(conn).ConfigureAwait(false);
                 }
             }
             catch (Exception ex)

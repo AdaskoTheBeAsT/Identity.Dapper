@@ -1,12 +1,13 @@
-﻿using Identity.Dapper.Models;
-using Identity.Dapper.Queries.Contracts;
 using System;
+using Identity.Dapper.Models;
+using Identity.Dapper.Queries.Contracts;
 
 namespace Identity.Dapper.Queries.User
 {
     public class GetRolesByUserIdQuery : ISelectQuery
     {
         private readonly SqlConfiguration _sqlConfiguration;
+
         public GetRolesByUserIdQuery(SqlConfiguration sqlConfiguration)
         {
             _sqlConfiguration = sqlConfiguration;
@@ -15,24 +16,14 @@ namespace Identity.Dapper.Queries.User
         public string GetQuery()
         {
             var query = _sqlConfiguration.GetRolesByUserIdQuery
-                                         .ReplaceQueryParameters(_sqlConfiguration.SchemaName,
-                                                                 string.Empty,
-                                                                 _sqlConfiguration.ParameterNotation,
-                                                                 new string[] {
-                                                                                  "%ID%"
-                                                                              },
-                                                                 new string[] {
-                                                                                  "UserId"
-                                                                              },
-                                                                 new string[] {
-                                                                                  "%ROLETABLE%",
-                                                                                  "%USERROLETABLE%"
-                                                                              },
-                                                                 new string[] {
-                                                                                  _sqlConfiguration.RoleTable,
-                                                                                  _sqlConfiguration.UserRoleTable
-                                                                              }
-                                                                );
+                .ReplaceQueryParameters(
+                    _sqlConfiguration.SchemaName,
+                    string.Empty,
+                    _sqlConfiguration.ParameterNotation,
+                    new string[] { "%ID%", },
+                    new string[] { "UserId", },
+                    new string[] { "%ROLETABLE%", "%USERROLETABLE%", },
+                    new string[] { _sqlConfiguration.RoleTable, _sqlConfiguration.UserRoleTable, });
 
             return query;
         }

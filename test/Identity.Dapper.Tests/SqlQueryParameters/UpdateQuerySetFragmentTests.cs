@@ -12,7 +12,7 @@ namespace Identity.Dapper.Tests.SqlQueryParameters
                 "A",
                 "\"B\"",
                 "C",
-                "\"D\""
+                "\"D\"",
             };
 
             const string expected = "SET A = @A, \"B\" = @B, C = @C, \"D\" = @D";

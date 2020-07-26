@@ -1,4 +1,5 @@
-﻿using Identity.Dapper.Entities;
+using System;
+using Identity.Dapper.Entities;
 using Identity.Dapper.Models;
 using Identity.Dapper.MySQL.Connections;
 using Identity.Dapper.MySQL.Models;
@@ -8,7 +9,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System;
 
 namespace Identity.Dapper.Tests.Integration.MySQL
 {
@@ -16,12 +16,19 @@ namespace Identity.Dapper.Tests.Integration.MySQL
     {
         public TestStartupMySql(IHostingEnvironment env)
         {
+            if (env is null)
+            {
+                throw new ArgumentNullException(nameof(env));
+            }
+
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("integrationtest.config.mysql.json", optional: false, reloadOnChange: true);
 
             if (env.IsDevelopment())
+            {
                 builder.AddUserSecrets<TestStartupMySql>();
+            }
 
             builder.AddEnvironmentVariables();
             Configuration = builder.Build();
@@ -34,7 +41,7 @@ namespace Identity.Dapper.Tests.Integration.MySQL
         {
             services.ConfigureDapperConnectionProvider<MySqlConnectionProvider>(Configuration.GetSection("DapperIdentity"))
                     .ConfigureDapperIdentityCryptography(Configuration.GetSection("DapperIdentityCryptography"))
-                    .ConfigureDapperIdentityOptions(new DapperIdentityOptions { UseTransactionalBehavior = false }); //Change to True to use Transactions in all operations
+                    .ConfigureDapperIdentityOptions(new DapperIdentityOptions { UseTransactionalBehavior = false }); // Change to True to use Transactions in all operations
 
             services.AddIdentity<DapperIdentityUser, DapperIdentityRole>(x =>
             {
@@ -56,6 +63,11 @@ namespace Identity.Dapper.Tests.Integration.MySQL
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
+            if (loggerFactory is null)
+            {
+                throw new ArgumentNullException(nameof(loggerFactory));
+            }
+
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
         }

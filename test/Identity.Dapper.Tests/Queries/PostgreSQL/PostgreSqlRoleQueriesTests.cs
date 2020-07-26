@@ -1,4 +1,4 @@
-﻿using Identity.Dapper.Entities;
+using Identity.Dapper.Entities;
 using Identity.Dapper.Factories;
 using Identity.Dapper.Factories.Contracts;
 using Identity.Dapper.PostgreSQL.Models;
@@ -13,6 +13,7 @@ namespace Identity.Dapper.Tests.Queries.PostgreSQL
     public class PostgreSqlRoleQueriesTests
     {
         private readonly IQueryFactory _queryFactory;
+
         public PostgreSqlRoleQueriesTests()
         {
             var services = new ServiceCollection();
@@ -26,7 +27,7 @@ namespace Identity.Dapper.Tests.Queries.PostgreSQL
             })
                    .AddDapperIdentityFor<PostgreSqlConfiguration>();
 
-            var serviceProvider = services.BuildServiceProvider();
+            using var serviceProvider = services.BuildServiceProvider();
 
             var queryList = new QueryList(serviceProvider);
 
@@ -85,9 +86,8 @@ namespace Identity.Dapper.Tests.Queries.PostgreSQL
             {
                 Id = 1,
                 Name = "Teste",
-                Dummy = "dummy"
+                Dummy = "dummy",
             });
-
 
             const string expected = "UPDATE \"dbo\".\"IdentityRole\" SET \"Dummy\" = @Dummy, \"Name\" = @Name WHERE \"Id\" = @Id";
 

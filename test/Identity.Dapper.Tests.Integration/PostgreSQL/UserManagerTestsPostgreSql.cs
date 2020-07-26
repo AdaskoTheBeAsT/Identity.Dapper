@@ -1,68 +1,79 @@
-﻿using Identity.Dapper.Entities;
-using Microsoft.AspNetCore.Identity;
 using System;
-using System.Collections.Generic;
+using System.Globalization;
 using System.Security.Claims;
-using System.Text;
 using System.Threading.Tasks;
+using Identity.Dapper.Entities;
+using Microsoft.AspNetCore.Identity;
 using Xunit;
 
 namespace Identity.Dapper.Tests.Integration.PostgreSQL
 {
-    //TODO:
-    //There's a little problem with IClassFixture that on EVERY test, the constructor of the class is called (and if implements IDisposable, the Dispose() is called too)
-    //So, there's no safe way to clean data of the database.
-    //As a workaround, every time you run this test, execute restart.sh to reset all data on Docker container
+    // TODO:
+    // There's a little problem with IClassFixture that on EVERY test, the constructor of the class is called (and if implements IDisposable, the Dispose() is called too)
+    // So, there's no safe way to clean data of the database.
+    // As a workaround, every time you run this test, execute restart.sh to reset all data on Docker container
     [Collection(nameof(PostgreSQL))]
     [TestCaseOrderer(TestCollectionOrderer.TypeName, TestCollectionOrderer.AssemblyName)]
     public class UserManagerTestsPostgreSql : IClassFixture<PostgreDatabaseFixture>
     {
         private readonly PostgreDatabaseFixture _databaseFixture;
         private readonly UserManager<DapperIdentityUser> _userManager;
+
         public UserManagerTestsPostgreSql(PostgreDatabaseFixture databaseFixture)
         {
+            if (databaseFixture is null)
+            {
+                throw new ArgumentNullException(nameof(databaseFixture));
+            }
+
             _databaseFixture = databaseFixture;
             _userManager = (UserManager<DapperIdentityUser>)_databaseFixture.TestServer.Host.Services.GetService(typeof(UserManager<DapperIdentityUser>));
         }
 
-        [Fact, TestPriority(200)]
+        [Fact]
+        [TestPriority(200)]
         public async Task CanCreateUserWithoutPassword()
         {
             var result = await _userManager.CreateAsync(new DapperIdentityUser
             {
                 UserName = "test",
-                Email = "test@test.com"
+                Email = "test@test.com",
             });
 
             Assert.True(result.Succeeded);
         }
 
-        [Fact, TestPriority(201)]
+        [Fact]
+        [TestPriority(201)]
         public async Task CanCreateUserWithPassword()
         {
-            var result = await _userManager.CreateAsync(new DapperIdentityUser
-            {
-                UserName = "test2",
-                Email = "test2@test2.com"
-            }, "123456");
+            var result = await _userManager.CreateAsync(
+                new DapperIdentityUser
+                {
+                    UserName = "test2",
+                    Email = "test2@test2.com",
+                },
+                "123456");
 
             Assert.True(result.Succeeded);
         }
 
-        [Fact, TestPriority(202)]
+        [Fact]
+        [TestPriority(202)]
         public async Task CantCreateDuplicateUser()
         {
             var result = await _userManager.CreateAsync(new DapperIdentityUser
             {
                 UserName = "test",
-                Email = "test@test.com"
+                Email = "test@test.com",
             });
 
             Assert.False(result.Succeeded);
-            Assert.Contains(result.Errors, x => x.Code.Equals(new IdentityErrorDescriber().DuplicateUserName("").Code));
+            Assert.Contains(result.Errors, x => x.Code.Equals(new IdentityErrorDescriber().DuplicateUserName(string.Empty).Code));
         }
 
-        [Fact, TestPriority(203)]
+        [Fact]
+        [TestPriority(203)]
         public async Task CanFindUserByName()
         {
             var result = await _userManager.FindByNameAsync("test");
@@ -70,16 +81,22 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
             Assert.NotNull(result);
         }
 
-        [Fact, TestPriority(204)]
+        [Fact]
+        [TestPriority(204)]
         public async Task CanCreateUserWithEmptyUserName()
         {
             var result = await _userManager.CreateAsync(new DapperIdentityUser { Email = "test@test.com" });
 
-            Assert.Contains(result.Errors, x => x.Code.Equals(new IdentityErrorDescriber().InvalidUserName("").Code));
+            Assert.Contains(
+                result.Errors,
+                x => x.Code.Equals(
+                    new IdentityErrorDescriber().InvalidUserName(string.Empty).Code,
+                    StringComparison.OrdinalIgnoreCase));
             Assert.False(result.Succeeded);
         }
 
-        [Fact, TestPriority(205)]
+        [Fact]
+        [TestPriority(205)]
         public async Task CanIncreaseAccessFailedCount()
         {
             var user = await _userManager.FindByNameAsync("test");
@@ -88,7 +105,8 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
             Assert.True(result.Succeeded);
         }
 
-        [Fact, TestPriority(206)]
+        [Fact]
+        [TestPriority(206)]
         public async Task CanGetAccessFailedCount()
         {
             var user = await _userManager.FindByNameAsync("test");
@@ -97,7 +115,8 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
             Assert.True(result > 0);
         }
 
-        [Fact, TestPriority(207)]
+        [Fact]
+        [TestPriority(207)]
         public async Task CanAddClaim()
         {
             await _userManager.CreateAsync(new DapperIdentityUser { UserName = "claim", Email = "claim@claim.com" }, "123456");
@@ -109,7 +128,8 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
             Assert.True(result.Succeeded);
         }
 
-        [Fact, TestPriority(208)]
+        [Fact]
+        [TestPriority(208)]
         public async Task CanAddClaims()
         {
             var user = await _userManager.FindByNameAsync("claim");
@@ -122,7 +142,8 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
             Assert.True(result.Succeeded);
         }
 
-        [Fact, TestPriority(209)]
+        [Fact]
+        [TestPriority(209)]
         public async Task CanGetClaims()
         {
             var user = await _userManager.FindByNameAsync("claim");
@@ -130,12 +151,15 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
 
             var result = await _userManager.GetClaimsAsync(user);
 
-            Assert.Collection(result, x => x.Type.Equals(ClaimTypes.AuthenticationMethod),
-                                      x => x.Type.Equals(ClaimTypes.AuthorizationDecision),
-                                      x => x.Type.Equals(ClaimTypes.Actor));
+            Assert.Collection(
+                result,
+                x => x.Type.Equals(ClaimTypes.AuthenticationMethod, StringComparison.OrdinalIgnoreCase),
+                x => x.Type.Equals(ClaimTypes.AuthorizationDecision, StringComparison.OrdinalIgnoreCase),
+                x => x.Type.Equals(ClaimTypes.Actor, StringComparison.OrdinalIgnoreCase));
         }
 
-        [Fact, TestPriority(210)]
+        [Fact]
+        [TestPriority(210)]
         public async Task CanRemoveClaim()
         {
             var user = await _userManager.FindByNameAsync("claim");
@@ -146,7 +170,8 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
             Assert.True(result.Succeeded);
         }
 
-        [Fact, TestPriority(211)]
+        [Fact]
+        [TestPriority(211)]
         public async Task CanRemoveClaims()
         {
             var user = await _userManager.FindByNameAsync("claim");
@@ -160,7 +185,8 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
             Assert.True(result.Succeeded);
         }
 
-        [Fact, TestPriority(212)]
+        [Fact]
+        [TestPriority(212)]
         public async Task CanAddLogin()
         {
             await _userManager.CreateAsync(new DapperIdentityUser { UserName = "login", Email = "login@login.com" }, "123456");
@@ -175,7 +201,8 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
             Assert.True(result2.Succeeded);
         }
 
-        [Fact, TestPriority(213)]
+        [Fact]
+        [TestPriority(213)]
         public async Task CanGetLogin()
         {
             var user = await _userManager.FindByNameAsync("login");
@@ -183,10 +210,14 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
 
             var result = await _userManager.GetLoginsAsync(user);
 
-            Assert.Collection(result, x => x.LoginProvider.Equals("dummy"), x => x.LoginProvider.Equals("dummy2"));
+            Assert.Collection(
+                result,
+                x => x.LoginProvider.Equals("dummy", StringComparison.OrdinalIgnoreCase),
+                x => x.LoginProvider.Equals("dummy2", StringComparison.OrdinalIgnoreCase));
         }
 
-        [Fact, TestPriority(214)]
+        [Fact]
+        [TestPriority(214)]
         public async Task CanRemoveLogin()
         {
             var user = await _userManager.FindByNameAsync("login");
@@ -197,7 +228,8 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
             Assert.True(result.Succeeded);
         }
 
-        [Fact, TestPriority(215)]
+        [Fact]
+        [TestPriority(215)]
         public async Task CanAddPassword()
         {
             await _userManager.CreateAsync(new DapperIdentityUser { UserName = "test3", Email = "test3@test3.com" });
@@ -209,7 +241,8 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
             Assert.True(result.Succeeded);
         }
 
-        [Fact, TestPriority(216)]
+        [Fact]
+        [TestPriority(216)]
         public async Task CanChangeEmail()
         {
             var user = await _userManager.FindByNameAsync("test3");
@@ -227,7 +260,8 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
             Assert.Equal("test3changed@test3.com", user.Email, ignoreCase: true);
         }
 
-        [Fact, TestPriority(217)]
+        [Fact]
+        [TestPriority(217)]
         public async Task CanChangePassword()
         {
             var user = await _userManager.FindByNameAsync("test3");
@@ -239,7 +273,8 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
             Assert.True(result.Succeeded);
         }
 
-        [Fact, TestPriority(218)]
+        [Fact]
+        [TestPriority(218)]
         public async Task CanChangePhoneNumber()
         {
             var user = await _userManager.FindByNameAsync("test3");
@@ -259,7 +294,8 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
             Assert.Equal("123", user.PhoneNumber);
         }
 
-        [Fact, TestPriority(219)]
+        [Fact]
+        [TestPriority(219)]
         public async Task CanCheckPassword()
         {
             var user = await _userManager.FindByNameAsync("test3");
@@ -269,7 +305,8 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
             Assert.True(result);
         }
 
-        [Fact, TestPriority(220)]
+        [Fact]
+        [TestPriority(220)]
         public async Task CanVerifyEmail()
         {
             var user = await _userManager.FindByNameAsync("test3");
@@ -289,15 +326,17 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
             Assert.True(user.EmailConfirmed);
         }
 
-        [Fact, TestPriority(221)]
+        [Fact]
+        [TestPriority(221)]
         public async Task CanFindById()
         {
-            var user = await _userManager.FindByIdAsync(2.ToString());
+            var user = await _userManager.FindByIdAsync(2.ToString(CultureInfo.InvariantCulture));
 
             Assert.NotNull(user);
         }
 
-        [Fact, TestPriority(222)]
+        [Fact]
+        [TestPriority(222)]
         public async Task CanFindByEmail()
         {
             var user = await _userManager.FindByEmailAsync("test3changed@test3.com");
@@ -305,7 +344,8 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
             Assert.NotNull(user);
         }
 
-        [Fact, TestPriority(223)]
+        [Fact]
+        [TestPriority(223)]
         public async Task CanFindByLogin()
         {
             var user = await _userManager.FindByLoginAsync("dummy2", "dummy2");
@@ -313,7 +353,8 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
             Assert.NotNull(user);
         }
 
-        [Fact, TestPriority(224)]
+        [Fact]
+        [TestPriority(224)]
         public async Task CanGetPhoneNumber()
         {
             var user = await _userManager.FindByNameAsync("test3");
@@ -323,7 +364,8 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
             Assert.Equal("123", result);
         }
 
-        [Fact, TestPriority(225)]
+        [Fact]
+        [TestPriority(225)]
         public async Task CanUpdateClaim()
         {
             var user = await _userManager.FindByNameAsync("claim");
@@ -341,10 +383,14 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
 
             var claims = await _userManager.GetClaimsAsync(user);
 
-            Assert.Collection(claims, x => x.Type.Equals(ClaimTypes.Actor), x => x.Value.Equals("test2"));
+            Assert.Collection(
+                claims,
+                x => x.Type.Equals(ClaimTypes.Actor, StringComparison.OrdinalIgnoreCase),
+                x => x.Value.Equals("test2", StringComparison.OrdinalIgnoreCase));
         }
 
-        [Fact, TestPriority(226)]
+        [Fact]
+        [TestPriority(226)]
         public async Task CanResetAccessFailedCount()
         {
             var user = await _userManager.FindByNameAsync("test");
@@ -363,7 +409,8 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
             Assert.Equal(0, actualAccessCount);
         }
 
-        [Fact, TestPriority(227)]
+        [Fact]
+        [TestPriority(227)]
         public async Task CanUpdate()
         {
             var user = await _userManager.FindByNameAsync("test");
@@ -380,7 +427,8 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
             Assert.Equal("testchanged@test.com", user.Email, ignoreCase: true);
         }
 
-        [Fact, TestPriority(228)]
+        [Fact]
+        [TestPriority(228)]
         public async Task CanRemoveUser()
         {
             var user = await _userManager.FindByNameAsync("test");
@@ -390,14 +438,15 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
             Assert.True(result.Succeeded);
         }
 
-        //Fixes https://github.com/grandchamp/Identity.Dapper/issues/72
-        [Fact, TestPriority(229)]
+        // Fixes https://github.com/grandchamp/Identity.Dapper/issues/72
+        [Fact]
+        [TestPriority(229)]
         public async Task FindByLoginAsyncReturnsUser()
         {
-            var result = await _userManager.CreateAsync(new DapperIdentityUser
+            await _userManager.CreateAsync(new DapperIdentityUser
             {
                 UserName = "test",
-                Email = "test@test.com"
+                Email = "test@test.com",
             });
 
             var user = await _userManager.FindByEmailAsync("test@test.com");

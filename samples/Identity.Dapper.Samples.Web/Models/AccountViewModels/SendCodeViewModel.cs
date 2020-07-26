@@ -1,18 +1,22 @@
-﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Identity.Dapper.Samples.Web.Models.AccountViewModels
 {
     public class SendCodeViewModel
     {
-        public string SelectedProvider { get; set; }
+        public SendCodeViewModel()
+        {
+            Providers = new List<SelectListItem>();
+        }
 
-        public ICollection<SelectListItem> Providers { get; set; }
+        public string? SelectedProvider { get; set; }
 
-        public string ReturnUrl { get; set; }
+        public ICollection<SelectListItem> Providers { get; private set; }
+
+#pragma warning disable CA1056 // Uri properties should not be strings
+        public string? ReturnUrl { get; set; }
+#pragma warning restore CA1056 // Uri properties should not be strings
 
         public bool RememberMe { get; set; }
     }

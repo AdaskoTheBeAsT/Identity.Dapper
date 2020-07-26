@@ -1,8 +1,9 @@
-﻿namespace Identity.Dapper.Models
+namespace Identity.Dapper.Models
 {
-    public class AESKeys
+    public class AesKeys
     {
-        public string Key { get; set; }
-        public string IV { get; set; }
+        public string? Key { get; set; }
+
+        public string? IV { get; set; }
     }
 }

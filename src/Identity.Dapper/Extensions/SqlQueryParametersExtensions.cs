@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -6,10 +7,25 @@ namespace Identity.Dapper
 {
     public static class SqlQueryParametersExtensions
     {
-        public static List<string> InsertQueryValuesFragment(this List<string> valuesArray, string parameterNotation, IEnumerable<string> propertyNames)
+        public static List<string> InsertQueryValuesFragment(
+            this List<string> valuesArray,
+            string parameterNotation,
+            IEnumerable<string> propertyNames)
         {
+            if (valuesArray is null)
+            {
+                throw new ArgumentNullException(nameof(valuesArray));
+            }
+
+            if (propertyNames is null)
+            {
+                throw new ArgumentNullException(nameof(propertyNames));
+            }
+
             foreach (var property in propertyNames)
+            {
                 valuesArray.Add($"{parameterNotation}{property.RemoveSpecialCharacters()}");
+            }
 
             return valuesArray;
         }
@@ -27,9 +43,13 @@ namespace Identity.Dapper
                 var propertyName = propertyNamesArray[i];
 
                 if (i == 0)
+                {
                     setBuilder.Append($"SET {propertyName} = {parameterNotation}{propertyName.RemoveSpecialCharacters()}");
+                }
                 else
+                {
                     setBuilder.Append($", {propertyName} = {parameterNotation}{propertyName.RemoveSpecialCharacters()}");
+                }
             }
 
             return setBuilder.ToString();
@@ -41,7 +61,9 @@ namespace Identity.Dapper
             var filterBuilderArray = new List<string>(propertyNamesArray.Length);
 
             for (int i = 0; i < propertyNamesArray.Length; i++)
+            {
                 filterBuilderArray.Add($"{tableName}.{propertyNamesArray[i]}");
+            }
 
             return string.Join(", ", filterBuilderArray);
         }

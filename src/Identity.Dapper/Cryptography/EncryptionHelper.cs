@@ -1,24 +1,28 @@
-﻿using Identity.Dapper.Models;
+using System;
+using System.IO;
+using System.Security.Cryptography;
+using System.Text;
+using Identity.Dapper.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System;
-using System.Security.Cryptography;
 
 namespace Identity.Dapper.Cryptography
 {
     public class EncryptionHelper
     {
-        private enum CryptoFunction
-        {
-            Encrypt, Decrypt
-        }
-
-        private readonly IOptions<AESKeys> _aesKeys;
+        private readonly IOptions<AesKeys> _aesKeys;
         private readonly ILogger<EncryptionHelper> _log;
-        public EncryptionHelper(IOptions<AESKeys> aesKeys, ILogger<EncryptionHelper> log)
+
+        public EncryptionHelper(IOptions<AesKeys> aesKeys, ILogger<EncryptionHelper> log)
         {
             _aesKeys = aesKeys;
             _log = log;
+        }
+
+        private enum CryptoFunction
+        {
+            Encrypt,
+            Decrypt,
         }
 
         public static string Base64Encode(string plainText)
@@ -49,7 +53,9 @@ namespace Identity.Dapper.Cryptography
                 if (string.IsNullOrEmpty(_aesKeys.Value.Key)
                     || string.IsNullOrEmpty(_aesKeys.Value.IV)
                     || string.IsNullOrEmpty(input))
+                {
                     return input;
+                }
 
                 string result;
                 switch (cryptoFunction)
@@ -61,13 +67,15 @@ namespace Identity.Dapper.Cryptography
                         result = DecryptInput(input);
                         break;
                     default:
-                        result = null;
+                        result = string.Empty;
                         break;
                 }
 
                 return result;
             }
+#pragma warning disable CA1031 // Do not catch general exception types
             catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
             {
                 _log.LogError(ex.Message, ex);
 
@@ -77,8 +85,8 @@ namespace Identity.Dapper.Cryptography
 
         private string EncryptInput(string input)
         {
-            var key = Base64Decode(_aesKeys.Value.Key);
-            var iv = Base64Decode(_aesKeys.Value.IV);
+            var key = Base64Decode(_aesKeys.Value.Key ?? string.Empty);
+            var iv = Base64Decode(_aesKeys.Value.IV ?? string.Empty);
 
             using (var aes = Aes.Create())
             {
@@ -87,7 +95,7 @@ namespace Identity.Dapper.Cryptography
                     using (var msEncrypt = new System.IO.MemoryStream())
                     {
                         using (var csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
-                        using (var swEncrypt = new System.IO.StreamWriter(csEncrypt))
+                        using (var swEncrypt = new System.IO.StreamWriter(csEncrypt, Encoding.UTF8, 1024, true))
                         {
                             swEncrypt.Write(input);
                         }
@@ -107,32 +115,20 @@ namespace Identity.Dapper.Cryptography
         private string DecryptInput(string input)
         {
             var fullCipher = Convert.FromBase64String(input);
-            var iv = Base64Decode(_aesKeys.Value.IV);
+            var iv = Base64Decode(_aesKeys.Value.IV ?? string.Empty);
             var cipher = new byte[fullCipher.Length - iv.Length];
 
             Buffer.BlockCopy(fullCipher, iv.Length, cipher, 0, fullCipher.Length - iv.Length);
-            var key = Base64Decode(_aesKeys.Value.Key);
+            var key = Base64Decode(_aesKeys.Value.Key ?? string.Empty);
 
             using (var aes = Aes.Create())
+            using (var decryptor = aes.CreateDecryptor(key, iv))
+            using (var msDecrypt = new MemoryStream(cipher))
+            using (var csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
+            using (var srDecrypt = new StreamReader(csDecrypt, Encoding.UTF8, true, 1024, true))
             {
-                using (var decryptor = aes.CreateDecryptor(key, iv))
-                {
-                    string result;
-                    using (var msDecrypt = new System.IO.MemoryStream(cipher))
-                    {
-                        using (var csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
-                        {
-                            using (var srDecrypt = new System.IO.StreamReader(csDecrypt))
-                            {
-                                result = srDecrypt.ReadToEnd();
-                            }
-                        }
-                    }
-
-                    return result;
-                }
+                return srDecrypt.ReadToEnd();
             }
         }
-
     }
 }

@@ -14,12 +14,12 @@ namespace Identity.Dapper.Tests.SqlQueryParameters
                 "\"A\"",
                 "\"B\"",
                 "\"C\"",
-                "\"D\""
+                "\"D\"",
             };
 
             var expected = new string[]
             {
-                "@A", "@B", "@C", "@D"
+                "@A", "@B", "@C", "@D",
             }.ToList();
 
             var resultValues = new List<string>();

@@ -1,13 +1,14 @@
-﻿using Identity.Dapper.Models;
-using Identity.Dapper.Queries.Contracts;
 using System.Collections.Generic;
 using System.Linq;
+using Identity.Dapper.Models;
+using Identity.Dapper.Queries.Contracts;
 
 namespace Identity.Dapper.Queries.Role
 {
     public class InsertRoleClaimQuery : IInsertQuery
     {
         private readonly SqlConfiguration _sqlConfiguration;
+
         public InsertRoleClaimQuery(SqlConfiguration sqlConfiguration)
         {
             _sqlConfiguration = sqlConfiguration;
@@ -21,10 +22,11 @@ namespace Identity.Dapper.Queries.Role
             valuesArray = valuesArray.InsertQueryValuesFragment(_sqlConfiguration.ParameterNotation, columns);
 
             var query = _sqlConfiguration.InsertRoleClaimQuery
-                                         .ReplaceInsertQueryParameters(_sqlConfiguration.SchemaName,
-                                                                       _sqlConfiguration.RoleClaimTable,
-                                                                       columns.GetCommaSeparatedColumns(),
-                                                                       string.Join(", ", valuesArray));
+                .ReplaceInsertQueryParameters(
+                    _sqlConfiguration.SchemaName,
+                    _sqlConfiguration.RoleClaimTable,
+                    columns.GetCommaSeparatedColumns(),
+                    string.Join(", ", valuesArray));
 
             return query;
         }

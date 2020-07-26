@@ -1,17 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Identity.Dapper.Samples.Web.Entities;
+using Identity.Dapper.Samples.Web.Models.ManageViewModels;
+using Identity.Dapper.Samples.Web.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Identity.Dapper.Samples.Web.Models;
-using Identity.Dapper.Samples.Web.Models.ManageViewModels;
-using Identity.Dapper.Samples.Web.Services;
-using Identity.Dapper.Entities;
-using Identity.Dapper.Samples.Web.Entities;
-using Microsoft.AspNetCore.Authentication;
 
 namespace Identity.Dapper.Samples.Web.Controllers
 {
@@ -41,7 +37,18 @@ namespace Identity.Dapper.Samples.Web.Controllers
             _logger = loggerFactory.CreateLogger<ManageController>();
         }
 
-        //
+        public enum ManageMessageId
+        {
+            AddPhoneSuccess,
+            AddLoginSuccess,
+            ChangePasswordSuccess,
+            SetTwoFactorSuccess,
+            SetPasswordSuccess,
+            RemoveLoginSuccess,
+            RemovePhoneSuccess,
+            Error,
+        }
+
         // GET: /Manage/Index
         [HttpGet]
         public async Task<IActionResult> Index(ManageMessageId? message = null)
@@ -53,7 +60,7 @@ namespace Identity.Dapper.Samples.Web.Controllers
                 : message == ManageMessageId.Error ? "An error has occurred."
                 : message == ManageMessageId.AddPhoneSuccess ? "Your phone number was added."
                 : message == ManageMessageId.RemovePhoneSuccess ? "Your phone number was removed."
-                : "";
+                : string.Empty;
 
             var user = await GetCurrentUserAsync();
             var model = new IndexViewModel
@@ -62,12 +69,11 @@ namespace Identity.Dapper.Samples.Web.Controllers
                 PhoneNumber = await _userManager.GetPhoneNumberAsync(user),
                 TwoFactor = await _userManager.GetTwoFactorEnabledAsync(user),
                 Logins = await _userManager.GetLoginsAsync(user),
-                BrowserRemembered = await _signInManager.IsTwoFactorClientRememberedAsync(user)
+                BrowserRemembered = await _signInManager.IsTwoFactorClientRememberedAsync(user),
             };
             return View(model);
         }
 
-        //
         // POST: /Manage/RemoveLogin
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -84,17 +90,16 @@ namespace Identity.Dapper.Samples.Web.Controllers
                     message = ManageMessageId.RemoveLoginSuccess;
                 }
             }
+
             return RedirectToAction(nameof(ManageLogins), new { Message = message });
         }
 
-        //
         // GET: /Manage/AddPhoneNumber
         public IActionResult AddPhoneNumber()
         {
             return View();
         }
 
-        //
         // POST: /Manage/AddPhoneNumber
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -104,6 +109,7 @@ namespace Identity.Dapper.Samples.Web.Controllers
             {
                 return View(model);
             }
+
             // Generate the token and send it
             var user = await GetCurrentUserAsync();
             var code = await _userManager.GenerateChangePhoneNumberTokenAsync(user, model.PhoneNumber);
@@ -111,7 +117,6 @@ namespace Identity.Dapper.Samples.Web.Controllers
             return RedirectToAction(nameof(VerifyPhoneNumber), new { PhoneNumber = model.PhoneNumber });
         }
 
-        //
         // POST: /Manage/EnableTwoFactorAuthentication
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -124,10 +129,10 @@ namespace Identity.Dapper.Samples.Web.Controllers
                 await _signInManager.SignInAsync(user, isPersistent: false);
                 _logger.LogInformation(1, "User enabled two-factor authentication.");
             }
+
             return RedirectToAction(nameof(Index), "Manage");
         }
 
-        //
         // POST: /Manage/DisableTwoFactorAuthentication
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -140,20 +145,20 @@ namespace Identity.Dapper.Samples.Web.Controllers
                 await _signInManager.SignInAsync(user, isPersistent: false);
                 _logger.LogInformation(2, "User disabled two-factor authentication.");
             }
+
             return RedirectToAction(nameof(Index), "Manage");
         }
 
-        //
         // GET: /Manage/VerifyPhoneNumber
         [HttpGet]
         public async Task<IActionResult> VerifyPhoneNumber(string phoneNumber)
         {
-            var code = await _userManager.GenerateChangePhoneNumberTokenAsync(await GetCurrentUserAsync(), phoneNumber);
+            await _userManager.GenerateChangePhoneNumberTokenAsync(await GetCurrentUserAsync(), phoneNumber);
+
             // Send an SMS to verify the phone number
             return phoneNumber == null ? View("Error") : View(new VerifyPhoneNumberViewModel { PhoneNumber = phoneNumber });
         }
 
-        //
         // POST: /Manage/VerifyPhoneNumber
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -163,6 +168,7 @@ namespace Identity.Dapper.Samples.Web.Controllers
             {
                 return View(model);
             }
+
             var user = await GetCurrentUserAsync();
             if (user != null)
             {
@@ -173,12 +179,12 @@ namespace Identity.Dapper.Samples.Web.Controllers
                     return RedirectToAction(nameof(Index), new { Message = ManageMessageId.AddPhoneSuccess });
                 }
             }
+
             // If we got this far, something failed, redisplay the form
             ModelState.AddModelError(string.Empty, "Failed to verify phone number");
             return View(model);
         }
 
-        //
         // POST: /Manage/RemovePhoneNumber
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -194,10 +200,10 @@ namespace Identity.Dapper.Samples.Web.Controllers
                     return RedirectToAction(nameof(Index), new { Message = ManageMessageId.RemovePhoneSuccess });
                 }
             }
+
             return RedirectToAction(nameof(Index), new { Message = ManageMessageId.Error });
         }
 
-        //
         // GET: /Manage/ChangePassword
         [HttpGet]
         public IActionResult ChangePassword()
@@ -205,7 +211,6 @@ namespace Identity.Dapper.Samples.Web.Controllers
             return View();
         }
 
-        //
         // POST: /Manage/ChangePassword
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -215,6 +220,7 @@ namespace Identity.Dapper.Samples.Web.Controllers
             {
                 return View(model);
             }
+
             var user = await GetCurrentUserAsync();
             if (user != null)
             {
@@ -225,13 +231,14 @@ namespace Identity.Dapper.Samples.Web.Controllers
                     _logger.LogInformation(3, "User changed their password successfully.");
                     return RedirectToAction(nameof(Index), new { Message = ManageMessageId.ChangePasswordSuccess });
                 }
+
                 AddErrors(result);
                 return View(model);
             }
+
             return RedirectToAction(nameof(Index), new { Message = ManageMessageId.Error });
         }
 
-        //
         // GET: /Manage/SetPassword
         [HttpGet]
         public IActionResult SetPassword()
@@ -239,7 +246,6 @@ namespace Identity.Dapper.Samples.Web.Controllers
             return View();
         }
 
-        //
         // POST: /Manage/SetPassword
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -259,13 +265,15 @@ namespace Identity.Dapper.Samples.Web.Controllers
                     await _signInManager.SignInAsync(user, isPersistent: false);
                     return RedirectToAction(nameof(Index), new { Message = ManageMessageId.SetPasswordSuccess });
                 }
+
                 AddErrors(result);
                 return View(model);
             }
+
             return RedirectToAction(nameof(Index), new { Message = ManageMessageId.Error });
         }
 
-        //GET: /Manage/ManageLogins
+        // GET: /Manage/ManageLogins
         [HttpGet]
         public async Task<IActionResult> ManageLogins(ManageMessageId? message = null)
         {
@@ -273,12 +281,13 @@ namespace Identity.Dapper.Samples.Web.Controllers
                 message == ManageMessageId.RemoveLoginSuccess ? "The external login was removed."
                 : message == ManageMessageId.AddLoginSuccess ? "The external login was added."
                 : message == ManageMessageId.Error ? "An error has occurred."
-                : "";
+                : string.Empty;
             var user = await GetCurrentUserAsync();
             if (user == null)
             {
                 return View("Error");
             }
+
             var userLogins = await _userManager.GetLoginsAsync(user);
             var schemes = await _authenticationSchemeProvider.GetAllSchemesAsync();
             var otherLogins = schemes.Where(auth => userLogins.All(ul => auth.Name != ul.LoginProvider)).ToList();
@@ -286,11 +295,10 @@ namespace Identity.Dapper.Samples.Web.Controllers
             return View(new ManageLoginsViewModel
             {
                 CurrentLogins = userLogins,
-                OtherLogins = otherLogins
+                OtherLogins = otherLogins,
             });
         }
 
-        //
         // POST: /Manage/LinkLogin
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -302,7 +310,6 @@ namespace Identity.Dapper.Samples.Web.Controllers
             return new ChallengeResult(provider, properties);
         }
 
-        //
         // GET: /Manage/LinkLoginCallback
         [HttpGet]
         public async Task<ActionResult> LinkLoginCallback()
@@ -312,11 +319,13 @@ namespace Identity.Dapper.Samples.Web.Controllers
             {
                 return View("Error");
             }
+
             var info = await _signInManager.GetExternalLoginInfoAsync(await _userManager.GetUserIdAsync(user));
             if (info == null)
             {
                 return RedirectToAction(nameof(ManageLogins), new { Message = ManageMessageId.Error });
             }
+
             var result = await _userManager.AddLoginAsync(user, info);
             var message = result.Succeeded ? ManageMessageId.AddLoginSuccess : ManageMessageId.Error;
             return RedirectToAction(nameof(ManageLogins), new { Message = message });
@@ -330,18 +339,6 @@ namespace Identity.Dapper.Samples.Web.Controllers
             {
                 ModelState.AddModelError(string.Empty, error.Description);
             }
-        }
-
-        public enum ManageMessageId
-        {
-            AddPhoneSuccess,
-            AddLoginSuccess,
-            ChangePasswordSuccess,
-            SetTwoFactorSuccess,
-            SetPasswordSuccess,
-            RemoveLoginSuccess,
-            RemovePhoneSuccess,
-            Error
         }
 
         private Task<CustomUser> GetCurrentUserAsync()

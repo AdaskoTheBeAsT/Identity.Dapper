@@ -1,12 +1,13 @@
-﻿using Identity.Dapper.Models;
-using Identity.Dapper.Queries.Contracts;
 using System;
+using Identity.Dapper.Models;
+using Identity.Dapper.Queries.Contracts;
 
 namespace Identity.Dapper.Queries.User
 {
     public class GetUserLoginInfoByIdQuery : ISelectQuery
     {
         private readonly SqlConfiguration _sqlConfiguration;
+
         public GetUserLoginInfoByIdQuery(SqlConfiguration sqlConfiguration)
         {
             _sqlConfiguration = sqlConfiguration;
@@ -15,11 +16,12 @@ namespace Identity.Dapper.Queries.User
         public string GetQuery()
         {
             var query = _sqlConfiguration.GetUserLoginInfoByIdQuery
-                                         .ReplaceQueryParameters(_sqlConfiguration.SchemaName,
-                                                                 _sqlConfiguration.UserLoginTable,
-                                                                 _sqlConfiguration.ParameterNotation,
-                                                                 new string[] { "%ID%" },
-                                                                 new string[] { "UserId" });
+                .ReplaceQueryParameters(
+                    _sqlConfiguration.SchemaName,
+                    _sqlConfiguration.UserLoginTable,
+                    _sqlConfiguration.ParameterNotation,
+                    new string[] { "%ID%" },
+                    new string[] { "UserId" });
 
             return query;
         }

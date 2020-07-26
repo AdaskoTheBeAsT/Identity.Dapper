@@ -1,12 +1,9 @@
-﻿using Identity.Dapper.Entities;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using Identity.Dapper.Entities;
 
 namespace Identity.Dapper.Tests.Models
 {
     public class CustomDapperIdentityUser : DapperIdentityUser
     {
-        public string Dummy { get; set; }
+        public string? Dummy { get; set; }
     }
 }

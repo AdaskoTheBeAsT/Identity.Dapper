@@ -1,24 +1,31 @@
-﻿using Identity.Dapper.Factories.Contracts;
-using Identity.Dapper.Queries.Contracts;
 using System;
 using System.Collections.Concurrent;
+using Identity.Dapper.Factories.Contracts;
+using Identity.Dapper.Queries.Contracts;
 
 namespace Identity.Dapper.Factories
 {
     public class QueryFactory : IQueryFactory
     {
         private readonly ConcurrentDictionary<Type, IQuery> _queryList;
+
         public QueryFactory(IQueryList queryList)
         {
+            if (queryList is null)
+            {
+                throw new ArgumentNullException(nameof(queryList));
+            }
+
             _queryList = queryList.RetrieveQueryList();
         }
 
-        public string GetDeleteQuery<TQuery>() where TQuery : IDeleteQuery
+        public string GetDeleteQuery<TQuery>()
+            where TQuery : IDeleteQuery
         {
             try
             {
                 var query = _queryList[typeof(TQuery)] as IDeleteQuery;
-                return (query).GetQuery();
+                return query?.GetQuery() ?? string.Empty;
             }
             catch (Exception)
             {
@@ -26,25 +33,13 @@ namespace Identity.Dapper.Factories
             }
         }
 
-        public string GetInsertQuery<TQuery, TEntity>(TEntity entity) where TQuery : IInsertQuery
+        public string GetInsertQuery<TQuery, TEntity>(TEntity entity)
+            where TQuery : IInsertQuery
         {
             try
             {
                 var query = _queryList[typeof(TQuery)] as IInsertQuery;
-                return (query).GetQuery(entity);
-            }
-            catch (Exception)
-            {
-                throw new NotImplementedException($"Query {typeof(TQuery)} not found.");
-            }
-        }
-        
-        public string GetQuery<TQuery>() where TQuery : ISelectQuery
-        {
-            try
-            {
-                var query = _queryList[typeof(TQuery)] as ISelectQuery;
-                return (query).GetQuery();
+                return query?.GetQuery(entity) ?? string.Empty;
             }
             catch (Exception)
             {
@@ -52,12 +47,13 @@ namespace Identity.Dapper.Factories
             }
         }
 
-        public string GetQuery<TQuery, TEntity>(TEntity entity) where TQuery : ISelectQuery
+        public string GetQuery<TQuery>()
+            where TQuery : ISelectQuery
         {
             try
             {
                 var query = _queryList[typeof(TQuery)] as ISelectQuery;
-                return (query).GetQuery(entity);
+                return query?.GetQuery() ?? string.Empty;
             }
             catch (Exception)
             {
@@ -65,12 +61,27 @@ namespace Identity.Dapper.Factories
             }
         }
 
-        public string GetUpdateQuery<TQuery, TEntity>(TEntity entity) where TQuery : IUpdateQuery
+        public string GetQuery<TQuery, TEntity>(TEntity entity)
+            where TQuery : ISelectQuery
+        {
+            try
+            {
+                var query = _queryList[typeof(TQuery)] as ISelectQuery;
+                return query?.GetQuery(entity) ?? string.Empty;
+            }
+            catch (Exception)
+            {
+                throw new NotImplementedException($"Query {typeof(TQuery)} not found.");
+            }
+        }
+
+        public string GetUpdateQuery<TQuery, TEntity>(TEntity entity)
+            where TQuery : IUpdateQuery
         {
             try
             {
                 var query = _queryList[typeof(TQuery)] as IUpdateQuery;
-                return (query).GetQuery(entity);
+                return query?.GetQuery(entity) ?? string.Empty;
             }
             catch (Exception)
             {
