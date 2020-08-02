@@ -52,6 +52,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".props", ".props", "{81C808
 		TODO.txt = TODO.txt
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Identity.Dapper.Oracle", "src\Identity.Dapper.Oracle\Identity.Dapper.Oracle.csproj", "{18280C23-438A-46A6-8B8F-D5C4AC6C3538}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -86,6 +88,10 @@ Global
 		{DA771514-4B3B-437A-A118-DC275E16B831}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DA771514-4B3B-437A-A118-DC275E16B831}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DA771514-4B3B-437A-A118-DC275E16B831}.Release|Any CPU.Build.0 = Release|Any CPU
+		{18280C23-438A-46A6-8B8F-D5C4AC6C3538}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18280C23-438A-46A6-8B8F-D5C4AC6C3538}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18280C23-438A-46A6-8B8F-D5C4AC6C3538}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18280C23-438A-46A6-8B8F-D5C4AC6C3538}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -98,6 +104,7 @@ Global
 		{676D4919-98F7-4B35-BAF0-76DF84F77448} = {A1014397-D42D-4C4F-A391-95DEC2BAF318}
 		{9731F2B7-DFF0-4DBC-A25E-AB9FBFF2E063} = {EC299BD0-3BB6-484B-BCAE-358131F45D4D}
 		{DA771514-4B3B-437A-A118-DC275E16B831} = {A1014397-D42D-4C4F-A391-95DEC2BAF318}
+		{18280C23-438A-46A6-8B8F-D5C4AC6C3538} = {EC299BD0-3BB6-484B-BCAE-358131F45D4D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8A0E955D-E771-4402-A971-9C07E9926F63}
