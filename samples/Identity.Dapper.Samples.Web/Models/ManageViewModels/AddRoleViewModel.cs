@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace Identity.Dapper.Samples.Web.Models.ManageViewModels
 {
@@ -6,6 +6,6 @@ namespace Identity.Dapper.Samples.Web.Models.ManageViewModels
     {
         [Display(Name = "Role Name")]
         [Required]
-        public string RoleName { get; set; }
+        public string? RoleName { get; set; }
     }
 }

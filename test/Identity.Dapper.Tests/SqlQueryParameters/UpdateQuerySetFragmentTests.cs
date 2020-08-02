@@ -1,4 +1,4 @@
-﻿using Xunit;
+using Xunit;
 
 namespace Identity.Dapper.Tests.SqlQueryParameters
 {
@@ -17,8 +17,9 @@ namespace Identity.Dapper.Tests.SqlQueryParameters
 
             const string expected = "SET A = @A, \"B\" = @B, C = @C, \"D\" = @D";
 
-            Assert.Equal(expected,
-                         values.UpdateQuerySetFragment("@"));
+            Assert.Equal(
+                expected,
+                values.UpdateQuerySetFragment("@"));
         }
     }
 }

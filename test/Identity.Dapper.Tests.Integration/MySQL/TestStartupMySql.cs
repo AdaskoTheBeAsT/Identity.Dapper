@@ -3,18 +3,18 @@ using Identity.Dapper.Entities;
 using Identity.Dapper.Models;
 using Identity.Dapper.MySQL.Connections;
 using Identity.Dapper.MySQL.Models;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Identity.Dapper.Tests.Integration.MySQL
 {
     public class TestStartupMySql
     {
-        public TestStartupMySql(IHostingEnvironment env)
+        public TestStartupMySql(IWebHostEnvironment env)
         {
             if (env is null)
             {
@@ -39,6 +39,13 @@ namespace Identity.Dapper.Tests.Integration.MySQL
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddLogging(
+                options =>
+                {
+                    options.AddConsole();
+                    options.AddDebug();
+                });
+
             services.ConfigureDapperConnectionProvider<MySqlConnectionProvider>(Configuration.GetSection("DapperIdentity"))
                     .ConfigureDapperIdentityCryptography(Configuration.GetSection("DapperIdentityCryptography"))
                     .ConfigureDapperIdentityOptions(new DapperIdentityOptions { UseTransactionalBehavior = false }); // Change to True to use Transactions in all operations
@@ -58,18 +65,6 @@ namespace Identity.Dapper.Tests.Integration.MySQL
             // Add application services.
             services.AddTransient<IEmailSender, FakeAuthMessageSender>();
             services.AddTransient<ISmsSender, FakeAuthMessageSender>();
-        }
-
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
-        {
-            if (loggerFactory is null)
-            {
-                throw new ArgumentNullException(nameof(loggerFactory));
-            }
-
-            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
-            loggerFactory.AddDebug();
         }
     }
 }

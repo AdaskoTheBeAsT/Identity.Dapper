@@ -1,5 +1,4 @@
-﻿@model ManageLoginsViewModel
-@using Microsoft.AspNetCore.Http.Authentication
+@model ManageLoginsViewModel
 @{
     ViewData["Title"] = "Manage your external logins";
 }
@@ -7,7 +6,7 @@
 <h2>@ViewData["Title"].</h2>
 
 <p class="text-success">@ViewData["StatusMessage"]</p>
-@if (Model.CurrentLogins.Count > 0)
+@if (Model?.CurrentLogins?.Count > 0)
 {
     <h4>Registered Logins</h4>
     <table class="table">
@@ -37,7 +36,7 @@
         </tbody>
     </table>
 }
-@if (Model.OtherLogins.Count > 0)
+@if (Model?.OtherLogins?.Count > 0)
 {
     <h4>Add another service to log in.</h4>
     <hr />

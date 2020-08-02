@@ -88,28 +88,22 @@ namespace Identity.Dapper.Cryptography
             var key = Base64Decode(_aesKeys.Value.Key ?? string.Empty);
             var iv = Base64Decode(_aesKeys.Value.IV ?? string.Empty);
 
-            using (var aes = Aes.Create())
+            using var aes = Aes.Create();
+            using var encryptor = aes.CreateEncryptor(key, iv);
+            using var msEncrypt = new System.IO.MemoryStream();
+            using (var csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+            using (var swEncrypt = new System.IO.StreamWriter(csEncrypt, Encoding.UTF8, 1024, true))
             {
-                using (var encryptor = aes.CreateEncryptor(key, iv))
-                {
-                    using (var msEncrypt = new System.IO.MemoryStream())
-                    {
-                        using (var csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
-                        using (var swEncrypt = new System.IO.StreamWriter(csEncrypt, Encoding.UTF8, 1024, true))
-                        {
-                            swEncrypt.Write(input);
-                        }
-
-                        var decryptedContent = msEncrypt.ToArray();
-                        var result = new byte[iv.Length + decryptedContent.Length];
-
-                        Buffer.BlockCopy(iv, 0, result, 0, iv.Length);
-                        Buffer.BlockCopy(decryptedContent, 0, result, iv.Length, decryptedContent.Length);
-
-                        return Convert.ToBase64String(result);
-                    }
-                }
+                swEncrypt.Write(input);
             }
+
+            var decryptedContent = msEncrypt.ToArray();
+            var result = new byte[iv.Length + decryptedContent.Length];
+
+            Buffer.BlockCopy(iv, 0, result, 0, iv.Length);
+            Buffer.BlockCopy(decryptedContent, 0, result, iv.Length, decryptedContent.Length);
+
+            return Convert.ToBase64String(result);
         }
 
         private string DecryptInput(string input)
@@ -121,10 +115,10 @@ namespace Identity.Dapper.Cryptography
             Buffer.BlockCopy(fullCipher, iv.Length, cipher, 0, fullCipher.Length - iv.Length);
             var key = Base64Decode(_aesKeys.Value.Key ?? string.Empty);
 
-            using (var aes = Aes.Create())
-            using (var decryptor = aes.CreateDecryptor(key, iv))
-            using (var msDecrypt = new MemoryStream(cipher))
-            using (var csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
+            using var aes = Aes.Create();
+            using var decryptor = aes.CreateDecryptor(key, iv);
+            using var msDecrypt = new MemoryStream(cipher);
+            using var csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read);
             using (var srDecrypt = new StreamReader(csDecrypt, Encoding.UTF8, true, 1024, true))
             {
                 return srDecrypt.ReadToEnd();

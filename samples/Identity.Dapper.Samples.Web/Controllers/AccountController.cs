@@ -52,7 +52,9 @@ namespace Identity.Dapper.Samples.Web.Controllers
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
 #pragma warning disable CA1054 // Uri parameters should not be strings
+#pragma warning disable S4457 // Parameter validation in "async"/"await" methods should be wrapped
         public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
+#pragma warning restore S4457 // Parameter validation in "async"/"await" methods should be wrapped
 #pragma warning restore CA1054 // Uri parameters should not be strings
         {
             if (model is null)
@@ -65,7 +67,9 @@ namespace Identity.Dapper.Samples.Web.Controllers
             {
                 // This doesn't count login failures towards account lockout
                 // To enable password failures to trigger account lockout, set lockoutOnFailure: true
+#pragma warning disable SEC0018 // Identity Password Lockout Disabled
                 var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
+#pragma warning restore SEC0018 // Identity Password Lockout Disabled
                 if (result.Succeeded)
                 {
                     _logger.LogInformation(1, "User logged in.");
@@ -74,7 +78,13 @@ namespace Identity.Dapper.Samples.Web.Controllers
 
                 if (result.RequiresTwoFactor)
                 {
-                    return RedirectToAction(nameof(SendCode), new { ReturnUrl = returnUrl, RememberMe = model.RememberMe });
+                    return RedirectToAction(
+                        nameof(SendCode),
+                        new
+                        {
+                            ReturnUrl = returnUrl,
+                            model.RememberMe,
+                        });
                 }
 
                 if (result.IsLockedOut)
@@ -82,11 +92,9 @@ namespace Identity.Dapper.Samples.Web.Controllers
                     _logger.LogWarning(2, "User account locked out.");
                     return View("Lockout");
                 }
-                else
-                {
-                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-                    return View(model);
-                }
+
+                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                return View(model);
             }
 
             // If we got this far, something failed, redisplay form
@@ -97,7 +105,9 @@ namespace Identity.Dapper.Samples.Web.Controllers
         [HttpGet]
         [AllowAnonymous]
 #pragma warning disable CA1054 // Uri parameters should not be strings
+#pragma warning disable S4144 // Methods should not have identical implementations
         public IActionResult Register(string? returnUrl = null)
+#pragma warning restore S4144 // Methods should not have identical implementations
 #pragma warning restore CA1054 // Uri parameters should not be strings
         {
             ViewData["ReturnUrl"] = returnUrl;
@@ -109,7 +119,9 @@ namespace Identity.Dapper.Samples.Web.Controllers
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
 #pragma warning disable CA1054 // Uri parameters should not be strings
+#pragma warning disable S4457 // Parameter validation in "async"/"await" methods should be wrapped
         public async Task<IActionResult> Register(RegisterViewModel model, string? returnUrl = null)
+#pragma warning restore S4457 // Parameter validation in "async"/"await" methods should be wrapped
 #pragma warning restore CA1054 // Uri parameters should not be strings
         {
             if (model is null)
@@ -120,10 +132,11 @@ namespace Identity.Dapper.Samples.Web.Controllers
             ViewData["ReturnUrl"] = returnUrl;
             if (ModelState.IsValid)
             {
-                var user = new CustomUser { UserName = model.Email, Email = model.Email, Address = model.Address };
+                var user = new CustomUser { UserName = model.Email ?? string.Empty, Email = model.Email ?? string.Empty, Address = model.Address };
                 var result = await _userManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
+#pragma warning disable S125 // Sections of code should not be commented out
                     // For more information on how to enable account confirmation and password reset please visit http://go.microsoft.com/fwlink/?LinkID=532713
                     // Send an email with this link
                     // var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -131,8 +144,9 @@ namespace Identity.Dapper.Samples.Web.Controllers
                     // await _emailSender.SendEmailAsync(model.Email, "Confirm your account",
                     //    $"Please confirm your account by clicking this link: <a href='{callbackUrl}'>link</a>");
                     await _signInManager.SignInAsync(user, isPersistent: false);
+#pragma warning restore S125 // Sections of code should not be commented out
                     _logger.LogInformation(3, "User created a new account with password.");
-                    return RedirectToLocal(returnUrl);
+                    return RedirectToLocal(returnUrl ?? string.Empty);
                 }
 
                 AddErrors(result);
@@ -190,7 +204,7 @@ namespace Identity.Dapper.Samples.Web.Controllers
             if (result.Succeeded)
             {
                 _logger.LogInformation(5, "User logged in with {Name} provider.", info.LoginProvider);
-                return RedirectToLocal(returnUrl);
+                return RedirectToLocal(returnUrl ?? string.Empty);
             }
 
             if (result.RequiresTwoFactor)
@@ -217,7 +231,9 @@ namespace Identity.Dapper.Samples.Web.Controllers
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
 #pragma warning disable CA1054 // Uri parameters should not be strings
+#pragma warning disable S4457 // Parameter validation in "async"/"await" methods should be wrapped
         public async Task<IActionResult> ExternalLoginConfirmation(ExternalLoginConfirmationViewModel model, string? returnUrl = null)
+#pragma warning restore S4457 // Parameter validation in "async"/"await" methods should be wrapped
 #pragma warning restore CA1054 // Uri parameters should not be strings
         {
             if (model is null)
@@ -234,7 +250,7 @@ namespace Identity.Dapper.Samples.Web.Controllers
                     return View("ExternalLoginFailure");
                 }
 
-                var user = new CustomUser { UserName = model.Email, Email = model.Email };
+                var user = new CustomUser { UserName = model.Email ?? string.Empty, Email = model.Email ?? string.Empty };
                 var result = await _userManager.CreateAsync(user);
                 if (result.Succeeded)
                 {
@@ -243,7 +259,7 @@ namespace Identity.Dapper.Samples.Web.Controllers
                     {
                         await _signInManager.SignInAsync(user, isPersistent: false);
                         _logger.LogInformation(6, "User created an account using {Name} provider.", info.LoginProvider);
-                        return RedirectToLocal(returnUrl);
+                        return RedirectToLocal(returnUrl ?? string.Empty);
                     }
                 }
 
@@ -286,7 +302,9 @@ namespace Identity.Dapper.Samples.Web.Controllers
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
+#pragma warning disable S4457 // Parameter validation in "async"/"await" methods should be wrapped
         public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+#pragma warning restore S4457 // Parameter validation in "async"/"await" methods should be wrapped
         {
             if (model is null)
             {
@@ -302,6 +320,8 @@ namespace Identity.Dapper.Samples.Web.Controllers
                     return View(nameof(ForgotPasswordConfirmation));
                 }
 
+#pragma warning disable S125 // Sections of code should not be commented out
+
                 // For more information on how to enable account confirmation and password reset please visit http://go.microsoft.com/fwlink/?LinkID=532713
                 // Send an email with this link
                 // var code = await _userManager.GeneratePasswordResetTokenAsync(user);
@@ -309,6 +329,7 @@ namespace Identity.Dapper.Samples.Web.Controllers
                 // await _emailSender.SendEmailAsync(model.Email, "Reset Password",
                 //   $"Please reset your password by clicking here: <a href='{callbackUrl}'>link</a>");
                 // return View("ForgotPasswordConfirmation");
+#pragma warning restore S125 // Sections of code should not be commented out
             }
 
             // If we got this far, something failed, redisplay form
@@ -335,7 +356,9 @@ namespace Identity.Dapper.Samples.Web.Controllers
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
+#pragma warning disable S4457 // Parameter validation in "async"/"await" methods should be wrapped
         public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+#pragma warning restore S4457 // Parameter validation in "async"/"await" methods should be wrapped
         {
             if (model is null)
             {
@@ -394,7 +417,9 @@ namespace Identity.Dapper.Samples.Web.Controllers
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
+#pragma warning disable S4457 // Parameter validation in "async"/"await" methods should be wrapped
         public async Task<IActionResult> SendCode(SendCodeViewModel model)
+#pragma warning restore S4457 // Parameter validation in "async"/"await" methods should be wrapped
         {
             if (model is null)
             {
@@ -420,16 +445,23 @@ namespace Identity.Dapper.Samples.Web.Controllers
             }
 
             var message = "Your security code is: " + code;
-            if (model.SelectedProvider == "Email")
+            if (model.SelectedProvider != null && model.SelectedProvider.Equals("Email", StringComparison.OrdinalIgnoreCase))
             {
                 await _emailSender.SendEmailAsync(await _userManager.GetEmailAsync(user), "Security Code", message);
             }
-            else if (model.SelectedProvider == "Phone")
+            else if (model.SelectedProvider != null && model.SelectedProvider.Equals("Phone", StringComparison.OrdinalIgnoreCase))
             {
                 await _smsSender.SendSmsAsync(await _userManager.GetPhoneNumberAsync(user), message);
             }
 
-            return RedirectToAction(nameof(VerifyCode), new { Provider = model.SelectedProvider, ReturnUrl = model.ReturnUrl, RememberMe = model.RememberMe });
+            return RedirectToAction(
+                nameof(VerifyCode),
+                new
+                {
+                    Provider = model.SelectedProvider,
+                    model.ReturnUrl,
+                    model.RememberMe,
+                });
         }
 
         // GET: /Account/VerifyCode
@@ -453,7 +485,9 @@ namespace Identity.Dapper.Samples.Web.Controllers
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
+#pragma warning disable S4457 // Parameter validation in "async"/"await" methods should be wrapped
         public async Task<IActionResult> VerifyCode(VerifyCodeViewModel model)
+#pragma warning restore S4457 // Parameter validation in "async"/"await" methods should be wrapped
         {
             if (model is null)
             {
@@ -471,7 +505,7 @@ namespace Identity.Dapper.Samples.Web.Controllers
             var result = await _signInManager.TwoFactorSignInAsync(model.Provider, model.Code, model.RememberMe, model.RememberBrowser);
             if (result.Succeeded)
             {
-                return RedirectToLocal(model.ReturnUrl);
+                return RedirectToLocal(model.ReturnUrl ?? string.Empty);
             }
 
             if (result.IsLockedOut)
@@ -479,14 +513,10 @@ namespace Identity.Dapper.Samples.Web.Controllers
                 _logger.LogWarning(7, "User account locked out.");
                 return View("Lockout");
             }
-            else
-            {
-                ModelState.AddModelError(string.Empty, "Invalid code.");
-                return View(model);
-            }
-        }
 
-        #region Helpers
+            ModelState.AddModelError(string.Empty, "Invalid code.");
+            return View(model);
+        }
 
         private void AddErrors(IdentityResult result)
         {
@@ -503,16 +533,9 @@ namespace Identity.Dapper.Samples.Web.Controllers
 
         private IActionResult RedirectToLocal(string returnUrl)
         {
-            if (Url.IsLocalUrl(returnUrl))
-            {
-                return Redirect(returnUrl);
-            }
-            else
-            {
-                return RedirectToAction(nameof(HomeController.Index), "Home");
-            }
+            return Url.IsLocalUrl(returnUrl)
+                ? Redirect(returnUrl)
+                : (IActionResult)RedirectToAction(nameof(HomeController.Index), "Home");
         }
-
-        #endregion
     }
 }

@@ -34,7 +34,7 @@ namespace Identity.Dapper.Tests.ConnectionProviders
         [Fact]
         public void WithUnencryptedCredentials()
         {
-            var connectionString = "Host=myServerName;Port=5432;Database=myDataBase;Username=xxxx;Password=xxxx";
+            const string connectionString = "Host=myServerName;Port=5432;Database=myDataBase;Username=xxxx;Password=xxxx";
             var options = new ConnectionProviderOptions
             {
                 ConnectionString = connectionString,
@@ -45,8 +45,8 @@ namespace Identity.Dapper.Tests.ConnectionProviders
             mock.Setup(x => x.Value).Returns(options);
             var connectionProvider = new PostgreSqlConnectionProvider(mock.Object, _encryptionHelper);
 
-            var connection = connectionProvider.Create();
-            var expected = "Host=myServerName;Port=5432;Database=myDataBase;Username=testUsername;Password=testPassword";
+            using var connection = connectionProvider.Create();
+            const string expected = "Host=myServerName;Port=5432;Database=myDataBase;Username=testUsername;Password=testPassword";
 
             // connection string should have username/password substituded in
             Assert.Equal(connection.ConnectionString, expected);
@@ -55,7 +55,7 @@ namespace Identity.Dapper.Tests.ConnectionProviders
         [Fact]
         public void WithEncryptedCredentials()
         {
-            var connectionString = "Host=myServerName;Port=5432;Database=myDataBase;Username=xxxx;Password=xxxx";
+            const string connectionString = "Host=myServerName;Port=5432;Database=myDataBase;Username=xxxx;Password=xxxx";
             var options = new ConnectionProviderOptions
             {
                 ConnectionString = connectionString,
@@ -66,8 +66,8 @@ namespace Identity.Dapper.Tests.ConnectionProviders
             mock.Setup(x => x.Value).Returns(options);
             var connectionProvider = new PostgreSqlConnectionProvider(mock.Object, _encryptionHelper);
 
-            var connection = connectionProvider.Create();
-            var expected = "Host=myServerName;Port=5432;Database=myDataBase;Username=testUsername;Password=testPassword";
+            using var connection = connectionProvider.Create();
+            const string expected = "Host=myServerName;Port=5432;Database=myDataBase;Username=testUsername;Password=testPassword";
 
             // connection string should have username/password substituded in
             Assert.Equal(connection.ConnectionString, expected);
@@ -76,7 +76,7 @@ namespace Identity.Dapper.Tests.ConnectionProviders
         [Fact]
         public void WithoutCredentials()
         {
-            var connectionString = "Host=myServerName;Port=5432;Database=myDataBase;Username=xxxx;Password=xxxx";
+            const string connectionString = "Host=myServerName;Port=5432;Database=myDataBase;Username=xxxx;Password=xxxx";
             var options = new ConnectionProviderOptions
             {
                 ConnectionString = connectionString,
@@ -87,7 +87,7 @@ namespace Identity.Dapper.Tests.ConnectionProviders
             mock.Setup(x => x.Value).Returns(options);
             var connectionProvider = new PostgreSqlConnectionProvider(mock.Object, _encryptionHelper);
 
-            var connection = connectionProvider.Create();
+            using var connection = connectionProvider.Create();
 
             // connection string should be unchanged
             Assert.Equal(connection.ConnectionString, connectionString);

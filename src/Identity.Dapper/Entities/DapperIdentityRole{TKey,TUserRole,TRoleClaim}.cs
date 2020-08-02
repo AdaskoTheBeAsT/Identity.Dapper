@@ -20,12 +20,12 @@ namespace Identity.Dapper.Entities
             Name = roleName;
         }
 
-        public virtual ICollection<TUserRole> Users { get; } = new List<TUserRole>();
+        public ICollection<TUserRole> Users { get; } = new List<TUserRole>();
 
-        public virtual ICollection<TRoleClaim> Claims { get; } = new List<TRoleClaim>();
+        public ICollection<TRoleClaim> Claims { get; } = new List<TRoleClaim>();
 
-        public virtual TKey Id { get; set; }
+        public TKey Id { get; set; }
 
-        public virtual string? Name { get; set; }
+        public string? Name { get; set; }
     }
 }

@@ -22,6 +22,7 @@ namespace Identity.Dapper.Queries.User
         {
             var userProperties = entity.GetColumns(_sqlConfiguration, ignoreIdProperty: false, ignoreProperties: new string[] { "ConcurrencyStamp" }, forInsert: false);
 
+#pragma warning disable SA1118 // Parameter should not span multiple lines
             var query = _sqlConfiguration.GetUserLoginByLoginProviderAndProviderKeyQuery
                 .ReplaceQueryParameters(
                     _sqlConfiguration.SchemaName,
@@ -36,6 +37,7 @@ namespace Identity.Dapper.Queries.User
                         _sqlConfiguration.UserTable, _sqlConfiguration.UserLoginTable,
                         _sqlConfiguration.UserRoleTable,
                     });
+#pragma warning restore SA1118 // Parameter should not span multiple lines
 
             return query;
         }

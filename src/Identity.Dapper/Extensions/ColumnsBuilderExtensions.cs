@@ -29,7 +29,7 @@ namespace Identity.Dapper
                 throw new ArgumentNullException(nameof(entity));
             }
 
-            ignoreProperties = ignoreProperties ?? Enumerable.Empty<string>();
+            ignoreProperties ??= Enumerable.Empty<string>();
 
             IEnumerable<string> roleProperties;
             var idProperty = entity.GetType().GetProperty("Id");

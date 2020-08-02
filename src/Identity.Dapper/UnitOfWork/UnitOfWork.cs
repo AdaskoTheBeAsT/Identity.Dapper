@@ -6,7 +6,11 @@ using Identity.Dapper.UnitOfWork.Contracts;
 
 namespace Identity.Dapper.UnitOfWork
 {
+#pragma warning disable MA0049 // Type name should not match namespace
+#pragma warning disable CA1724 // The type name UnitOfWork conflicts in whole or in part with the namespace name
     public class UnitOfWork : IUnitOfWork
+#pragma warning restore CA1724 // The type name UnitOfWork conflicts in whole or in part with the namespace name
+#pragma warning restore MA0049 // Type name should not match namespace
     {
         private readonly IConnectionProvider _connectionProvider;
         private readonly SemaphoreSlim _semaphore;

@@ -65,7 +65,7 @@ namespace Identity.Dapper.Stores
             }
         }
 
-        public Task SaveChangesAsync(CancellationToken cancellationToken = default(CancellationToken)) =>
+        public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
             !_dapperIdentityOptions.UseTransactionalBehavior
                         ? Task.CompletedTask
                         : CommitTransactionAsync(cancellationToken);
@@ -76,7 +76,7 @@ namespace Identity.Dapper.Stores
             GC.SuppressFinalize(this);
         }
 
-        public async Task AddClaimsAsync(TUser user, IEnumerable<Claim> claims, CancellationToken cancellationToken)
+        public Task AddClaimsAsync(TUser user, IEnumerable<Claim> claims, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -85,20 +85,10 @@ namespace Identity.Dapper.Stores
                 throw new ArgumentNullException(nameof(user));
             }
 
-            try
-            {
-                await _userRepository.InsertClaimsAsync(user.Id, claims, cancellationToken).ConfigureAwait(false);
-            }
-#pragma warning disable CA1031 // Do not catch general exception types
-            catch (Exception ex)
-#pragma warning restore CA1031 // Do not catch general exception types
-            {
-                _log.LogError(ex.Message, ex);
-                throw;
-            }
+            return AddClaimsInternalAsync(user, claims, cancellationToken);
         }
 
-        public async Task AddLoginAsync(TUser user, UserLoginInfo login, CancellationToken cancellationToken)
+        public Task AddLoginAsync(TUser user, UserLoginInfo login, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -107,20 +97,10 @@ namespace Identity.Dapper.Stores
                 throw new ArgumentNullException(nameof(user));
             }
 
-            try
-            {
-                await _userRepository.InsertLoginInfoAsync(user.Id, login, cancellationToken).ConfigureAwait(false);
-            }
-#pragma warning disable CA1031 // Do not catch general exception types
-            catch (Exception ex)
-#pragma warning restore CA1031 // Do not catch general exception types
-            {
-                _log.LogError(ex.Message, ex);
-                throw;
-            }
+            return AddLoginInternalAsync(user, login, cancellationToken);
         }
 
-        public async Task AddToRoleAsync(TUser user, string roleName, CancellationToken cancellationToken)
+        public Task AddToRoleAsync(TUser user, string roleName, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -129,20 +109,10 @@ namespace Identity.Dapper.Stores
                 throw new ArgumentNullException(nameof(user));
             }
 
-            try
-            {
-                await _userRepository.AddToRoleAsync(user.Id, roleName, cancellationToken).ConfigureAwait(false);
-            }
-#pragma warning disable CA1031 // Do not catch general exception types
-            catch (Exception ex)
-#pragma warning restore CA1031 // Do not catch general exception types
-            {
-                _log.LogError(ex.Message, ex);
-                throw;
-            }
+            return AddToRoleInternalAsync(user, roleName, cancellationToken);
         }
 
-        public async Task<IdentityResult> CreateAsync(TUser user, CancellationToken cancellationToken)
+        public Task<IdentityResult> CreateAsync(TUser user, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -151,35 +121,10 @@ namespace Identity.Dapper.Stores
                 throw new ArgumentNullException(nameof(user));
             }
 
-            try
-            {
-                var result = await _userRepository.InsertAsync(user, cancellationToken).ConfigureAwait(false);
-
-                if (!result.Equals(default(TKey)))
-                {
-                    user.Id = result;
-
-                    return IdentityResult.Success;
-                }
-                else
-                {
-                    return IdentityResult.Failed();
-                }
-            }
-#pragma warning disable CA1031 // Do not catch general exception types
-            catch (Exception ex)
-#pragma warning restore CA1031 // Do not catch general exception types
-            {
-                _log.LogError(ex.Message, ex);
-
-                return IdentityResult.Failed(new IdentityError[]
-                {
-                    new IdentityError { Description = ex.Message },
-                });
-            }
+            return CreateInternalAsync(user, cancellationToken);
         }
 
-        public async Task<IdentityResult> DeleteAsync(TUser user, CancellationToken cancellationToken)
+        public Task<IdentityResult> DeleteAsync(TUser user, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -188,26 +133,10 @@ namespace Identity.Dapper.Stores
                 throw new ArgumentNullException(nameof(user));
             }
 
-            try
-            {
-                var result = await _userRepository.RemoveAsync(user.Id, cancellationToken).ConfigureAwait(false);
-
-                return result ? IdentityResult.Success : IdentityResult.Failed();
-            }
-#pragma warning disable CA1031 // Do not catch general exception types
-            catch (Exception ex)
-#pragma warning restore CA1031 // Do not catch general exception types
-            {
-                _log.LogError(ex.Message, ex);
-
-                return IdentityResult.Failed(new IdentityError[]
-                {
-                    new IdentityError { Description = ex.Message },
-                });
-            }
+            return DeleteInternalAsync(user, cancellationToken);
         }
 
-        public async Task<TUser> FindByEmailAsync(string normalizedEmail, CancellationToken cancellationToken)
+        public Task<TUser> FindByEmailAsync(string normalizedEmail, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -216,22 +145,10 @@ namespace Identity.Dapper.Stores
                 throw new ArgumentNullException(nameof(normalizedEmail));
             }
 
-            try
-            {
-                var result = await _userRepository.GetByEmailAsync(normalizedEmail).ConfigureAwait(false);
-
-                return result;
-            }
-#pragma warning disable CA1031 // Do not catch general exception types
-            catch (Exception ex)
-#pragma warning restore CA1031 // Do not catch general exception types
-            {
-                _log.LogError(ex.Message, ex);
-                throw;
-            }
+            return FindByEmailInternalAsync(normalizedEmail, cancellationToken);
         }
 
-        public async Task<TUser> FindByIdAsync(string userId, CancellationToken cancellationToken)
+        public Task<TUser> FindByIdAsync(string userId, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -240,32 +157,7 @@ namespace Identity.Dapper.Stores
                 throw new ArgumentNullException(nameof(userId));
             }
 
-            try
-            {
-                var key = default(TKey);
-
-                var converter = TypeDescriptor.GetConverter(typeof(TKey));
-                if (converter != null && converter.CanConvertFrom(typeof(string)))
-                {
-                    key = (TKey)converter.ConvertFromInvariantString(userId);
-                }
-                else
-                {
-                    key = (TKey)Convert.ChangeType(userId, typeof(TKey), CultureInfo.InvariantCulture);
-                }
-
-                var result = await _userRepository.GetByIdAsync(key).ConfigureAwait(false);
-
-                return result;
-            }
-#pragma warning disable CA1031 // Do not catch general exception types
-            catch (Exception ex)
-#pragma warning restore CA1031 // Do not catch general exception types
-            {
-                _log.LogError(ex.Message, ex);
-
-                throw;
-            }
+            return FindByIdInternalAsync(userId, cancellationToken);
         }
 
         public async Task<TUser> FindByLoginAsync(string loginProvider, string providerKey, CancellationToken cancellationToken)
@@ -274,9 +166,7 @@ namespace Identity.Dapper.Stores
 
             try
             {
-                var result = await _userRepository.GetByUserLoginAsync(loginProvider, providerKey).ConfigureAwait(false);
-
-                return result;
+                return await _userRepository.GetByUserLoginAsync(loginProvider, providerKey, cancellationToken).ConfigureAwait(false);
             }
 #pragma warning disable CA1031 // Do not catch general exception types
             catch (Exception ex)
@@ -288,7 +178,7 @@ namespace Identity.Dapper.Stores
             }
         }
 
-        public async Task<TUser> FindByNameAsync(string normalizedUserName, CancellationToken cancellationToken)
+        public Task<TUser> FindByNameAsync(string normalizedUserName, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -297,20 +187,7 @@ namespace Identity.Dapper.Stores
                 throw new ArgumentNullException(nameof(normalizedUserName));
             }
 
-            try
-            {
-                var result = await _userRepository.GetByUserNameAsync(normalizedUserName).ConfigureAwait(false);
-
-                return result;
-            }
-#pragma warning disable CA1031 // Do not catch general exception types
-            catch (Exception ex)
-#pragma warning restore CA1031 // Do not catch general exception types
-            {
-                _log.LogError(ex.Message, ex);
-
-                throw;
-            }
+            return FindByNameInternalAsync(normalizedUserName, cancellationToken);
         }
 
         public Task<int> GetAccessFailedCountAsync(TUser user, CancellationToken cancellationToken)
@@ -325,7 +202,7 @@ namespace Identity.Dapper.Stores
             return Task.FromResult(user.AccessFailedCount);
         }
 
-        public async Task<IList<Claim>> GetClaimsAsync(TUser user, CancellationToken cancellationToken)
+        public Task<IList<Claim>> GetClaimsAsync(TUser user, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -334,20 +211,7 @@ namespace Identity.Dapper.Stores
                 throw new ArgumentNullException(nameof(user));
             }
 
-            try
-            {
-                var result = await _userRepository.GetClaimsByUserIdAsync(user.Id).ConfigureAwait(false);
-
-                return result;
-            }
-#pragma warning disable CA1031 // Do not catch general exception types
-            catch (Exception ex)
-#pragma warning restore CA1031 // Do not catch general exception types
-            {
-                _log.LogError(ex.Message, ex);
-
-                throw;
-            }
+            return GetClaimsInternalAsync(user, cancellationToken);
         }
 
         public Task<string> GetEmailAsync(TUser user, CancellationToken cancellationToken)
@@ -398,7 +262,7 @@ namespace Identity.Dapper.Stores
             return Task.FromResult(user.LockoutEnd);
         }
 
-        public async Task<IList<UserLoginInfo>> GetLoginsAsync(TUser user, CancellationToken cancellationToken)
+        public Task<IList<UserLoginInfo>> GetLoginsAsync(TUser user, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -407,23 +271,12 @@ namespace Identity.Dapper.Stores
                 throw new ArgumentNullException(nameof(user));
             }
 
-            try
-            {
-                var result = await _userRepository.GetUserLoginInfoByIdAsync(user.Id).ConfigureAwait(false);
-
-                return result;
-            }
-#pragma warning disable CA1031 // Do not catch general exception types
-            catch (Exception ex)
-#pragma warning restore CA1031 // Do not catch general exception types
-            {
-                _log.LogError(ex.Message, ex);
-
-                throw;
-            }
+            return GetLoginsInternalAsync(user, cancellationToken);
         }
 
+        #pragma warning disable S4144 // Methods should not have identical implementations
         public Task<string> GetNormalizedEmailAsync(TUser user, CancellationToken cancellationToken)
+#pragma warning restore S4144 // Methods should not have identical implementations
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -483,7 +336,7 @@ namespace Identity.Dapper.Stores
             return Task.FromResult(user.PhoneNumberConfirmed);
         }
 
-        public async Task<IList<string>> GetRolesAsync(TUser user, CancellationToken cancellationToken)
+        public Task<IList<string>> GetRolesAsync(TUser user, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -492,20 +345,7 @@ namespace Identity.Dapper.Stores
                 throw new ArgumentNullException(nameof(user));
             }
 
-            try
-            {
-                var result = await _userRepository.GetRolesByUserIdAsync(user.Id).ConfigureAwait(false);
-
-                return result;
-            }
-#pragma warning disable CA1031 // Do not catch general exception types
-            catch (Exception ex)
-#pragma warning restore CA1031 // Do not catch general exception types
-            {
-                _log.LogError(ex.Message, ex);
-
-                throw;
-            }
+            return GetRolesInternalAsync(user, cancellationToken);
         }
 
         public Task<string> GetSecurityStampAsync(TUser user, CancellationToken cancellationToken)
@@ -549,7 +389,9 @@ namespace Identity.Dapper.Stores
             return Task.FromResult(user.Id.ToString());
         }
 
+#pragma warning disable S4144 // Methods should not have identical implementations
         public Task<string> GetUserNameAsync(TUser user, CancellationToken cancellationToken)
+#pragma warning restore S4144 // Methods should not have identical implementations
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -561,7 +403,7 @@ namespace Identity.Dapper.Stores
             return Task.FromResult(user.UserName ?? string.Empty);
         }
 
-        public async Task<IList<TUser>> GetUsersForClaimAsync(Claim claim, CancellationToken cancellationToken)
+        public Task<IList<TUser>> GetUsersForClaimAsync(Claim claim, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -570,22 +412,10 @@ namespace Identity.Dapper.Stores
                 throw new ArgumentNullException(nameof(claim));
             }
 
-            try
-            {
-                var result = await _userRepository.GetUsersByClaimAsync(claim).ConfigureAwait(false);
-
-                return result;
-            }
-#pragma warning disable CA1031 // Do not catch general exception types
-            catch (Exception ex)
-#pragma warning restore CA1031 // Do not catch general exception types
-            {
-                _log.LogError(ex.Message, ex);
-                throw;
-            }
+            return GetUsersForClaimInternalAsync(claim, cancellationToken);
         }
 
-        public async Task<IList<TUser>> GetUsersInRoleAsync(string roleName, CancellationToken cancellationToken)
+        public Task<IList<TUser>> GetUsersInRoleAsync(string roleName, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -594,18 +424,7 @@ namespace Identity.Dapper.Stores
                 throw new ArgumentNullException(nameof(roleName));
             }
 
-            try
-            {
-                var result = await _userRepository.GetUsersInRoleAsync(roleName).ConfigureAwait(false);
-
-                return result;
-            }
-            catch (Exception ex)
-            {
-                _log.LogError(ex.Message, ex);
-
-                throw;
-            }
+            return GetUsersInRoleInternalAsync(roleName, cancellationToken);
         }
 
         public Task<bool> HasPasswordAsync(TUser user, CancellationToken cancellationToken)
@@ -633,7 +452,7 @@ namespace Identity.Dapper.Stores
             return Task.FromResult(user.AccessFailedCount);
         }
 
-        public async Task<bool> IsInRoleAsync(TUser user, string roleName, CancellationToken cancellationToken)
+        public Task<bool> IsInRoleAsync(TUser user, string roleName, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -647,23 +466,10 @@ namespace Identity.Dapper.Stores
                 throw new ArgumentNullException(nameof(roleName));
             }
 
-            try
-            {
-                var result = await _userRepository.IsInRoleAsync(user.Id, roleName).ConfigureAwait(false);
-
-                return result;
-            }
-#pragma warning disable CA1031 // Do not catch general exception types
-            catch (Exception ex)
-#pragma warning restore CA1031 // Do not catch general exception types
-            {
-                _log.LogError(ex.Message, ex);
-
-                return false;
-            }
+            return IsInRoleInternalAsync(user, roleName, cancellationToken);
         }
 
-        public async Task RemoveClaimsAsync(TUser user, IEnumerable<Claim> claims, CancellationToken cancellationToken)
+        public Task RemoveClaimsAsync(TUser user, IEnumerable<Claim> claims, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -677,19 +483,10 @@ namespace Identity.Dapper.Stores
                 throw new ArgumentNullException(nameof(claims));
             }
 
-            try
-            {
-                await _userRepository.RemoveClaimsAsync(user.Id, claims, cancellationToken).ConfigureAwait(false);
-            }
-#pragma warning disable CA1031 // Do not catch general exception types
-            catch (Exception ex)
-#pragma warning restore CA1031 // Do not catch general exception types
-            {
-                _log.LogError(ex.Message, ex);
-            }
+            return RemoveClaimsInternalAsync(user, claims, cancellationToken);
         }
 
-        public async Task RemoveFromRoleAsync(TUser user, string roleName, CancellationToken cancellationToken)
+        public Task RemoveFromRoleAsync(TUser user, string roleName, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -703,19 +500,10 @@ namespace Identity.Dapper.Stores
                 throw new ArgumentNullException(nameof(roleName));
             }
 
-            try
-            {
-                await _userRepository.RemoveFromRoleAsync(user.Id, roleName, cancellationToken).ConfigureAwait(false);
-            }
-#pragma warning disable CA1031 // Do not catch general exception types
-            catch (Exception ex)
-#pragma warning restore CA1031 // Do not catch general exception types
-            {
-                _log.LogError(ex.Message, ex);
-            }
+            return RemoveFromRoleInternalAsync(user, roleName, cancellationToken);
         }
 
-        public async Task RemoveLoginAsync(TUser user, string loginProvider, string providerKey, CancellationToken cancellationToken)
+        public Task RemoveLoginAsync(TUser user, string loginProvider, string providerKey, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -734,16 +522,7 @@ namespace Identity.Dapper.Stores
                 throw new ArgumentNullException(nameof(providerKey));
             }
 
-            try
-            {
-                await _userRepository.RemoveLoginAsync(user.Id, loginProvider, providerKey, cancellationToken).ConfigureAwait(false);
-            }
-#pragma warning disable CA1031 // Do not catch general exception types
-            catch (Exception ex)
-#pragma warning restore CA1031 // Do not catch general exception types
-            {
-                _log.LogError(ex.Message, ex);
-            }
+            return RemoveLoginInternalAsync(user, loginProvider, providerKey, cancellationToken);
         }
 
         public Task RemoveTokenAsync(TUser user, string loginProvider, string name, CancellationToken cancellationToken)
@@ -751,7 +530,7 @@ namespace Identity.Dapper.Stores
             return Task.CompletedTask;
         }
 
-        public async Task ReplaceClaimAsync(TUser user, Claim claim, Claim newClaim, CancellationToken cancellationToken)
+        public Task ReplaceClaimAsync(TUser user, Claim claim, Claim newClaim, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -770,16 +549,7 @@ namespace Identity.Dapper.Stores
                 throw new ArgumentNullException(nameof(newClaim));
             }
 
-            try
-            {
-                await _userRepository.UpdateClaimAsync(user.Id, claim, newClaim, cancellationToken).ConfigureAwait(false);
-            }
-#pragma warning disable CA1031 // Do not catch general exception types
-            catch (Exception ex)
-#pragma warning restore CA1031 // Do not catch general exception types
-            {
-                _log.LogError(ex.Message, ex);
-            }
+            return ReplaceClaimInternalAsync(user, claim, newClaim, cancellationToken);
         }
 
         public Task ResetAccessFailedCountAsync(TUser user, CancellationToken cancellationToken)
@@ -965,7 +735,7 @@ namespace Identity.Dapper.Stores
             return Task.CompletedTask;
         }
 
-        public async Task<IdentityResult> UpdateAsync(TUser user, CancellationToken cancellationToken)
+        public Task<IdentityResult> UpdateAsync(TUser user, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -974,6 +744,380 @@ namespace Identity.Dapper.Stores
                 throw new ArgumentNullException(nameof(user));
             }
 
+            return UpdateInternalAsync(user, cancellationToken);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+#pragma warning disable S1066 // Collapsible "if" statements should be merged
+                if (_dapperIdentityOptions.UseTransactionalBehavior)
+#pragma warning restore S1066 // Collapsible "if" statements should be merged
+                {
+#pragma warning disable IDISP007 // Don't dispose injected.
+                    _unitOfWork?.Dispose();
+#pragma warning restore IDISP007 // Don't dispose injected.
+                }
+            }
+        }
+
+        private async Task AddClaimsInternalAsync(
+            TUser user,
+            IEnumerable<Claim> claims,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                await _userRepository.InsertClaimsAsync(user.Id, claims, cancellationToken).ConfigureAwait(false);
+            }
+#pragma warning disable CA1031 // Do not catch general exception types
+            catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
+            {
+                _log.LogError(ex.Message, ex);
+                throw;
+            }
+        }
+
+        private async Task AddLoginInternalAsync(
+            TUser user,
+            UserLoginInfo login,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                await _userRepository.InsertLoginInfoAsync(user.Id, login, cancellationToken).ConfigureAwait(false);
+            }
+#pragma warning disable CA1031 // Do not catch general exception types
+            catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
+            {
+                _log.LogError(ex.Message, ex);
+                throw;
+            }
+        }
+
+        private async Task AddToRoleInternalAsync(
+            TUser user,
+            string roleName,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                await _userRepository.AddToRoleAsync(user.Id, roleName, cancellationToken).ConfigureAwait(false);
+            }
+#pragma warning disable CA1031 // Do not catch general exception types
+            catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
+            {
+                _log.LogError(ex.Message, ex);
+                throw;
+            }
+        }
+
+        private async Task<IdentityResult> CreateInternalAsync(
+            TUser user,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var result = await _userRepository.InsertAsync(user, cancellationToken).ConfigureAwait(false);
+
+                if (!result.Equals(default))
+                {
+                    user.Id = result;
+
+                    return IdentityResult.Success;
+                }
+
+                return IdentityResult.Failed();
+            }
+#pragma warning disable CA1031 // Do not catch general exception types
+            catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
+            {
+                _log.LogError(ex.Message, ex);
+
+                return IdentityResult.Failed(new IdentityError[]
+                {
+                    new IdentityError { Description = ex.Message },
+                });
+            }
+        }
+
+        private async Task<IdentityResult> DeleteInternalAsync(
+            TUser user,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var result = await _userRepository.RemoveAsync(user.Id, cancellationToken).ConfigureAwait(false);
+
+                return result ? IdentityResult.Success : IdentityResult.Failed();
+            }
+#pragma warning disable CA1031 // Do not catch general exception types
+            catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
+            {
+                _log.LogError(ex.Message, ex);
+
+                return IdentityResult.Failed(new IdentityError[]
+                {
+                    new IdentityError { Description = ex.Message },
+                });
+            }
+        }
+
+        private async Task<TUser> FindByEmailInternalAsync(
+            string normalizedEmail,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var result = await _userRepository.GetByEmailAsync(normalizedEmail, cancellationToken).ConfigureAwait(false);
+
+                return result;
+            }
+#pragma warning disable CA1031 // Do not catch general exception types
+            catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
+            {
+                _log.LogError(ex.Message, ex);
+                throw;
+            }
+        }
+
+        private async Task<TUser> FindByIdInternalAsync(
+            string userId,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                TKey key;
+
+                var converter = TypeDescriptor.GetConverter(typeof(TKey));
+                if (converter != null && converter.CanConvertFrom(typeof(string)))
+                {
+                    key = (TKey)converter.ConvertFromInvariantString(userId);
+                }
+                else
+                {
+                    key = (TKey)Convert.ChangeType(userId, typeof(TKey), CultureInfo.InvariantCulture);
+                }
+
+                return await _userRepository.GetByIdAsync(key, cancellationToken).ConfigureAwait(false);
+            }
+#pragma warning disable CA1031 // Do not catch general exception types
+            catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
+            {
+                _log.LogError(ex.Message, ex);
+
+                throw;
+            }
+        }
+
+        private async Task<TUser> FindByNameInternalAsync(
+            string normalizedUserName,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var result = await _userRepository.GetByUserNameAsync(normalizedUserName, cancellationToken).ConfigureAwait(false);
+
+                return result;
+            }
+#pragma warning disable CA1031 // Do not catch general exception types
+            catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
+            {
+                _log.LogError(ex.Message, ex);
+
+                throw;
+            }
+        }
+
+        private async Task<IList<Claim>> GetClaimsInternalAsync(
+            TUser user,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                return await _userRepository.GetClaimsByUserIdAsync(user.Id, cancellationToken).ConfigureAwait(false);
+            }
+#pragma warning disable CA1031 // Do not catch general exception types
+            catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
+            {
+                _log.LogError(ex.Message, ex);
+
+                throw;
+            }
+        }
+
+        private async Task<IList<UserLoginInfo>> GetLoginsInternalAsync(
+            TUser user,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                return await _userRepository.GetUserLoginInfoByIdAsync(user.Id, cancellationToken).ConfigureAwait(false);
+            }
+#pragma warning disable CA1031 // Do not catch general exception types
+            catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
+            {
+                _log.LogError(ex.Message, ex);
+
+                throw;
+            }
+        }
+
+        private async Task<IList<string>> GetRolesInternalAsync(
+            TUser user,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                return await _userRepository.GetRolesByUserIdAsync(user.Id, cancellationToken).ConfigureAwait(false);
+            }
+#pragma warning disable CA1031 // Do not catch general exception types
+            catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
+            {
+                _log.LogError(ex.Message, ex);
+
+                throw;
+            }
+        }
+
+        private async Task<IList<TUser>> GetUsersForClaimInternalAsync(
+            Claim claim,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                return await _userRepository.GetUsersByClaimAsync(claim, cancellationToken).ConfigureAwait(false);
+            }
+#pragma warning disable CA1031 // Do not catch general exception types
+            catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
+            {
+                _log.LogError(ex.Message, ex);
+                throw;
+            }
+        }
+
+        private async Task<IList<TUser>> GetUsersInRoleInternalAsync(
+            string roleName,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                return await _userRepository.GetUsersInRoleAsync(roleName, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _log.LogError(ex.Message, ex);
+
+                throw;
+            }
+        }
+
+        private async Task<bool> IsInRoleInternalAsync(
+            TUser user,
+            string roleName,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                return await _userRepository.IsInRoleAsync(user.Id, roleName, cancellationToken).ConfigureAwait(false);
+            }
+#pragma warning disable CA1031 // Do not catch general exception types
+            catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
+            {
+                _log.LogError(ex.Message, ex);
+
+                return false;
+            }
+        }
+
+        private async Task RemoveClaimsInternalAsync(
+            TUser user,
+            IEnumerable<Claim> claims,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                await _userRepository.RemoveClaimsAsync(user.Id, claims, cancellationToken).ConfigureAwait(false);
+            }
+#pragma warning disable CA1031 // Do not catch general exception types
+            catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
+            {
+                _log.LogError(ex.Message, ex);
+            }
+        }
+
+        private async Task RemoveFromRoleInternalAsync(
+            TUser user,
+            string roleName,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                await _userRepository.RemoveFromRoleAsync(user.Id, roleName, cancellationToken).ConfigureAwait(false);
+            }
+#pragma warning disable CA1031 // Do not catch general exception types
+            catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
+            {
+                _log.LogError(ex.Message, ex);
+            }
+        }
+
+        private async Task RemoveLoginInternalAsync(
+            TUser user,
+            string loginProvider,
+            string providerKey,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                await _userRepository.RemoveLoginAsync(user.Id, loginProvider, providerKey, cancellationToken).ConfigureAwait(false);
+            }
+#pragma warning disable CA1031 // Do not catch general exception types
+            catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
+            {
+                _log.LogError(ex.Message, ex);
+            }
+        }
+
+        private async Task ReplaceClaimInternalAsync(
+            TUser user,
+            Claim claim,
+            Claim newClaim,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                await _userRepository.UpdateClaimAsync(user.Id, claim, newClaim, cancellationToken).ConfigureAwait(false);
+            }
+#pragma warning disable CA1031 // Do not catch general exception types
+            catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
+            {
+                _log.LogError(ex.Message, ex);
+            }
+        }
+
+        private async Task<IdentityResult> UpdateInternalAsync(
+            TUser user,
+            CancellationToken cancellationToken)
+        {
             try
             {
                 var result = await _userRepository.UpdateAsync(user, cancellationToken).ConfigureAwait(false);
@@ -993,24 +1137,9 @@ namespace Identity.Dapper.Stores
             }
         }
 
-        protected virtual void Dispose(bool disposing)
+        private Task CommitTransactionAsync(CancellationToken cancellationToken = default)
         {
-            if (disposing)
-            {
-#pragma warning disable S1066 // Collapsible "if" statements should be merged
-                if (_dapperIdentityOptions.UseTransactionalBehavior)
-#pragma warning restore S1066 // Collapsible "if" statements should be merged
-                {
-#pragma warning disable IDISP007 // Don't dispose injected.
-                    _unitOfWork?.Dispose();
-#pragma warning restore IDISP007 // Don't dispose injected.
-                }
-            }
-        }
-
-        private Task CommitTransactionAsync(CancellationToken cancellationToken = default(CancellationToken))
-        {
-            if (cancellationToken != default(CancellationToken))
+            if (cancellationToken != default)
             {
                 cancellationToken.ThrowIfCancellationRequested();
             }

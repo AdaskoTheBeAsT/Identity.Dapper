@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace Identity.Dapper.Samples.Web.Models.ManageViewModels
 {
@@ -7,6 +7,6 @@ namespace Identity.Dapper.Samples.Web.Models.ManageViewModels
         [Required]
         [Phone]
         [Display(Name = "Phone number")]
-        public string PhoneNumber { get; set; }
+        public string? PhoneNumber { get; set; }
     }
 }

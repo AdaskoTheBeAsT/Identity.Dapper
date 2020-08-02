@@ -13,8 +13,9 @@ namespace Identity.Dapper.Factories.Contracts
         string GetInsertQuery<TQuery, TEntity>(TEntity entity)
             where TQuery : IInsertQuery;
 
-        string GetUpdateQuery<TQuery, TEntity>(TEntity entity)
-            where TQuery : IUpdateQuery;
+        string GetUpdateQuery<TQuery, TEntity>(TEntity? entity)
+            where TQuery : IUpdateQuery
+            where TEntity : class;
 
         string GetDeleteQuery<TQuery>()
             where TQuery : IDeleteQuery;

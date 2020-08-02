@@ -8,10 +8,13 @@ using Xunit;
 
 namespace Identity.Dapper.Tests.Integration.SQLServer
 {
+#pragma warning disable MA0026 // Fix TODO comment
+
     // TODO:
     // There's a little problem with IClassFixture that on EVERY test, the constructor of the class is called (and if implements IDisposable, the Dispose() is called too)
     // So, there's no safe way to clean data of the database.
     // As a workaround, every time you run this test, execute restart.sh to reset all data on Docker container
+#pragma warning disable MA0026 // Fix TODO comment
     [Collection("SQL Server")]
     [TestCaseOrderer(TestCollectionOrderer.TypeName, TestCollectionOrderer.AssemblyName)]
     public class UserManagerTestsSqlServer
@@ -30,7 +33,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(401)]
-        public async Task CanCreateUserWithoutPassword()
+        public async Task CanCreateUserWithoutPasswordAsync()
         {
             var result = await _userManager.CreateAsync(
                 new DapperIdentityUser
@@ -44,7 +47,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(402)]
-        public async Task CanCreateUserWithPassword()
+        public async Task CanCreateUserWithPasswordAsync()
         {
             var result = await _userManager.CreateAsync(
                 new DapperIdentityUser
@@ -59,7 +62,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(403)]
-        public async Task CantCreateDuplicateUser()
+        public async Task CantCreateDuplicateUserAsync()
         {
             var result = await _userManager.CreateAsync(
                 new DapperIdentityUser
@@ -78,7 +81,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(404)]
-        public async Task CanFindUserByName()
+        public async Task CanFindUserByNameAsync()
         {
             var result = await _userManager.FindByNameAsync("test");
 
@@ -87,7 +90,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(405)]
-        public async Task CanCreateUserWithEmptyUserName()
+        public async Task CanCreateUserWithEmptyUserNameAsync()
         {
             var result = await _userManager.CreateAsync(new DapperIdentityUser { Email = "test@test.com" });
 
@@ -99,7 +102,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(406)]
-        public async Task CanIncreaseAccessFailedCount()
+        public async Task CanIncreaseAccessFailedCountAsync()
         {
             var user = await _userManager.FindByNameAsync("test");
             var result = await _userManager.AccessFailedAsync(user);
@@ -109,7 +112,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(407)]
-        public async Task CanGetAccessFailedCount()
+        public async Task CanGetAccessFailedCountAsync()
         {
             var user = await _userManager.FindByNameAsync("test");
             var result = await _userManager.GetAccessFailedCountAsync(user);
@@ -119,7 +122,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(408)]
-        public async Task CanAddClaim()
+        public async Task CanAddClaimAsync()
         {
             await _userManager.CreateAsync(
                 new DapperIdentityUser
@@ -138,7 +141,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(409)]
-        public async Task CanAddClaims()
+        public async Task CanAddClaimsAsync()
         {
             var user = await _userManager.FindByNameAsync("claim");
             Assert.NotNull(user);
@@ -152,7 +155,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(410)]
-        public async Task CanGetClaims()
+        public async Task CanGetClaimsAsync()
         {
             var user = await _userManager.FindByNameAsync("claim");
             Assert.NotNull(user);
@@ -168,7 +171,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(411)]
-        public async Task CanRemoveClaim()
+        public async Task CanRemoveClaimAsync()
         {
             var user = await _userManager.FindByNameAsync("claim");
             Assert.NotNull(user);
@@ -180,7 +183,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(412)]
-        public async Task CanRemoveClaims()
+        public async Task CanRemoveClaimsAsync()
         {
             var user = await _userManager.FindByNameAsync("claim");
             Assert.NotNull(user);
@@ -195,7 +198,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(413)]
-        public async Task CanAddLogin()
+        public async Task CanAddLoginAsync()
         {
             await _userManager.CreateAsync(
                 new DapperIdentityUser
@@ -217,7 +220,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(414)]
-        public async Task CanGetLogin()
+        public async Task CanGetLoginAsync()
         {
             var user = await _userManager.FindByNameAsync("login");
             Assert.NotNull(user);
@@ -232,7 +235,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(415)]
-        public async Task CanRemoveLogin()
+        public async Task CanRemoveLoginAsync()
         {
             var user = await _userManager.FindByNameAsync("login");
             Assert.NotNull(user);
@@ -244,7 +247,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(416)]
-        public async Task CanAddPassword()
+        public async Task CanAddPasswordAsync()
         {
             await _userManager.CreateAsync(
                 new DapperIdentityUser
@@ -262,7 +265,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(417)]
-        public async Task CanChangeEmail()
+        public async Task CanChangeEmailAsync()
         {
             var user = await _userManager.FindByNameAsync("test3");
 
@@ -281,7 +284,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(418)]
-        public async Task CanChangePassword()
+        public async Task CanChangePasswordAsync()
         {
             var user = await _userManager.FindByNameAsync("test3");
 
@@ -294,7 +297,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(419)]
-        public async Task CanChangePhoneNumber()
+        public async Task CanChangePhoneNumberAsync()
         {
             var user = await _userManager.FindByNameAsync("test3");
 
@@ -315,7 +318,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(420)]
-        public async Task CanCheckPassword()
+        public async Task CanCheckPasswordAsync()
         {
             var user = await _userManager.FindByNameAsync("test3");
 
@@ -326,7 +329,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(421)]
-        public async Task CanVerifyEmail()
+        public async Task CanVerifyEmailAsync()
         {
             var user = await _userManager.FindByNameAsync("test3");
 
@@ -347,7 +350,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(422)]
-        public async Task CanFindById()
+        public async Task CanFindByIdAsync()
         {
             var user = await _userManager.FindByIdAsync(2.ToString(CultureInfo.InvariantCulture));
 
@@ -356,7 +359,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(423)]
-        public async Task CanFindByEmail()
+        public async Task CanFindByEmailAsync()
         {
             var user = await _userManager.FindByEmailAsync("test3changed@test3.com");
 
@@ -365,7 +368,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(424)]
-        public async Task CanFindByLogin()
+        public async Task CanFindByLoginAsync()
         {
             var user = await _userManager.FindByLoginAsync("dummy2", "dummy2");
 
@@ -374,7 +377,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(425)]
-        public async Task CanGetPhoneNumber()
+        public async Task CanGetPhoneNumberAsync()
         {
             var user = await _userManager.FindByNameAsync("test3");
 
@@ -385,7 +388,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(426)]
-        public async Task CanUpdateClaim()
+        public async Task CanUpdateClaimAsync()
         {
             var user = await _userManager.FindByNameAsync("claim");
             Assert.NotNull(user);
@@ -410,7 +413,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(427)]
-        public async Task CanResetAccessFailedCount()
+        public async Task CanResetAccessFailedCountAsync()
         {
             var user = await _userManager.FindByNameAsync("test");
             Assert.NotNull(user);
@@ -430,7 +433,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(428)]
-        public async Task CanUpdate()
+        public async Task CanUpdateAsync()
         {
             var user = await _userManager.FindByNameAsync("test");
             Assert.NotNull(user);
@@ -448,7 +451,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(429)]
-        public async Task CanRemoveUser()
+        public async Task CanRemoveUserAsync()
         {
             var user = await _userManager.FindByNameAsync("test");
 
@@ -460,7 +463,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
         // Fixes https://github.com/grandchamp/Identity.Dapper/issues/72
         [Fact]
         [TestPriority(430)]
-        public async Task FindByLoginAsyncReturnsUser()
+        public async Task FindByLoginAsyncReturnsUserAsync()
         {
             await _userManager.CreateAsync(
                 new DapperIdentityUser

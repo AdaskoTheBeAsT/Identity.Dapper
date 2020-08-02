@@ -38,7 +38,7 @@ namespace Identity.Dapper.Repositories
             _queryFactory = queryFactory;
         }
 
-        public async Task<TRole> GetByIdAsync(TKey id)
+        public async Task<TRole> GetByIdAsync(TKey id, CancellationToken cancellationToken)
         {
             try
             {
@@ -57,12 +57,10 @@ namespace Identity.Dapper.Repositories
 
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync().ConfigureAwait(false);
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                        return await selectFunction(conn).ConfigureAwait(false);
-                    }
+                    return await selectFunction(conn).ConfigureAwait(false);
                 }
                 else
                 {
@@ -78,7 +76,7 @@ namespace Identity.Dapper.Repositories
             }
         }
 
-        public async Task<TRole> GetByNameAsync(string roleName)
+        public async Task<TRole> GetByNameAsync(string roleName, CancellationToken cancellationToken)
         {
             try
             {
@@ -98,12 +96,10 @@ namespace Identity.Dapper.Repositories
 
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync().ConfigureAwait(false);
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                        return await selectFunction(conn).ConfigureAwait(false);
-                    }
+                    return await selectFunction(conn).ConfigureAwait(false);
                 }
                 else
                 {
@@ -120,50 +116,14 @@ namespace Identity.Dapper.Repositories
             }
         }
 
-        public async Task<IEnumerable<TRoleClaim>> GetClaimsByRole(TRole role, CancellationToken cancellationToken)
+        public Task<IEnumerable<TRoleClaim>> GetClaimsByRoleAsync(TRole role, CancellationToken cancellationToken)
         {
             if (role is null)
             {
                 throw new ArgumentNullException(nameof(role));
             }
 
-            try
-            {
-                var selectFunction = new Func<DbConnection, Task<IEnumerable<TRoleClaim>>>(async x =>
-                {
-                    var dynamicParameters = new DynamicParameters();
-                    dynamicParameters.Add("RoleId", role.Id);
-
-                    var query = _queryFactory.GetQuery<GetClaimsByRoleQuery>();
-
-                    return await x.QueryAsync<TRoleClaim>(
-                        sql: query,
-                        param: dynamicParameters,
-                        transaction: _unitOfWork.Transaction)
-                        .ConfigureAwait(false);
-                });
-
-                if (_unitOfWork?.Connection == null)
-                {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
-
-                        return await selectFunction(conn).ConfigureAwait(false);
-                    }
-                }
-                else
-                {
-                    var conn = _unitOfWork.CreateOrGetConnection();
-                    return await selectFunction(conn).ConfigureAwait(false);
-                }
-            }
-            catch (Exception ex)
-            {
-                _log.LogError(ex, ex.Message);
-
-                throw;
-            }
+            return GetClaimsByInternalRoleAsync(role, cancellationToken);
         }
 
         public async Task<bool> InsertAsync(TRole role, CancellationToken cancellationToken)
@@ -183,12 +143,10 @@ namespace Identity.Dapper.Repositories
 
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                        return await insertFunction(conn).ConfigureAwait(false);
-                    }
+                    return await insertFunction(conn).ConfigureAwait(false);
                 }
                 else
                 {
@@ -204,7 +162,7 @@ namespace Identity.Dapper.Repositories
             }
         }
 
-        public async Task<bool> InsertClaimAsync(TRole role, Claim claim, CancellationToken cancellationToken)
+        public Task<bool> InsertClaimAsync(TRole role, Claim claim, CancellationToken cancellationToken)
         {
             if (role is null)
             {
@@ -216,45 +174,7 @@ namespace Identity.Dapper.Repositories
                 throw new ArgumentNullException(nameof(claim));
             }
 
-            try
-            {
-                var insertFunction = new Func<DbConnection, Task<bool>>(async x =>
-                {
-                    var roleClaim = Activator.CreateInstance<TRoleClaim>();
-                    roleClaim.ClaimType = claim.Type;
-                    roleClaim.ClaimValue = claim.Value;
-                    roleClaim.RoleId = role.Id;
-
-                    var dynamicParameters = new DynamicParameters(roleClaim);
-
-                    var query = _queryFactory.GetInsertQuery<InsertRoleClaimQuery, TRoleClaim>(roleClaim);
-
-                    var result = await x.ExecuteAsync(query, dynamicParameters, _unitOfWork.Transaction).ConfigureAwait(false);
-
-                    return result > 0;
-                });
-
-                if (_unitOfWork?.Connection == null)
-                {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
-
-                        return await insertFunction(conn).ConfigureAwait(false);
-                    }
-                }
-                else
-                {
-                    var conn = _unitOfWork.CreateOrGetConnection();
-                    return await insertFunction(conn).ConfigureAwait(false);
-                }
-            }
-            catch (Exception ex)
-            {
-                _log.LogError(ex, ex.Message);
-
-                throw;
-            }
+            return InsertClaimInternalAsync(role, claim, cancellationToken);
         }
 
         public async Task<bool> RemoveAsync(TKey id, CancellationToken cancellationToken)
@@ -275,12 +195,10 @@ namespace Identity.Dapper.Repositories
 
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                        return await removeFunction(conn).ConfigureAwait(false);
-                    }
+                    return await removeFunction(conn).ConfigureAwait(false);
                 }
                 else
                 {
@@ -296,7 +214,7 @@ namespace Identity.Dapper.Repositories
             }
         }
 
-        public async Task<bool> RemoveClaimAsync(TRole role, Claim claim, CancellationToken cancellationToken)
+        public Task<bool> RemoveClaimAsync(TRole role, Claim claim, CancellationToken cancellationToken)
         {
             if (role is null)
             {
@@ -308,6 +226,109 @@ namespace Identity.Dapper.Repositories
                 throw new ArgumentNullException(nameof(claim));
             }
 
+            return RemoveClaimInternalAsync(role, claim, cancellationToken);
+        }
+
+        public Task<bool> UpdateAsync(TRole role, CancellationToken cancellationToken)
+        {
+            if (role is null)
+            {
+                throw new ArgumentNullException(nameof(role));
+            }
+
+            return UpdateInternalAsync(role, cancellationToken);
+        }
+
+        private async Task<IEnumerable<TRoleClaim>> GetClaimsByInternalRoleAsync(
+            TRole role,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var selectFunction = new Func<DbConnection, Task<IEnumerable<TRoleClaim>>>(async x =>
+                {
+                    var dynamicParameters = new DynamicParameters();
+                    dynamicParameters.Add("RoleId", role.Id);
+
+                    var query = _queryFactory.GetQuery<GetClaimsByRoleQuery>();
+
+                    return await x.QueryAsync<TRoleClaim>(
+                            sql: query,
+                            param: dynamicParameters,
+                            transaction: _unitOfWork.Transaction)
+                        .ConfigureAwait(false);
+                });
+
+                if (_unitOfWork?.Connection == null)
+                {
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+                    return await selectFunction(conn).ConfigureAwait(false);
+                }
+                else
+                {
+                    var conn = _unitOfWork.CreateOrGetConnection();
+                    return await selectFunction(conn).ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, ex.Message);
+
+                throw;
+            }
+        }
+
+        private async Task<bool> InsertClaimInternalAsync(
+            TRole role,
+            Claim claim,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var insertFunction = new Func<DbConnection, Task<bool>>(async x =>
+                {
+                    var roleClaim = Activator.CreateInstance<TRoleClaim>();
+                    roleClaim.ClaimType = claim.Type;
+                    roleClaim.ClaimValue = claim.Value;
+                    roleClaim.RoleId = role.Id;
+
+                    var dynamicParameters = new DynamicParameters(roleClaim);
+
+                    var query = _queryFactory.GetInsertQuery<InsertRoleClaimQuery, TRoleClaim>(roleClaim);
+
+                    var result = await x.ExecuteAsync(query, dynamicParameters, _unitOfWork.Transaction).ConfigureAwait(false);
+
+                    return result > 0;
+                });
+
+                if (_unitOfWork?.Connection == null)
+                {
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+                    return await insertFunction(conn).ConfigureAwait(false);
+                }
+                else
+                {
+                    var conn = _unitOfWork.CreateOrGetConnection();
+                    return await insertFunction(conn).ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, ex.Message);
+
+                throw;
+            }
+        }
+
+        private async Task<bool> RemoveClaimInternalAsync(
+            TRole role,
+            Claim claim,
+            CancellationToken cancellationToken)
+        {
             try
             {
                 var removeFunction = new Func<DbConnection, Task<bool>>(async x =>
@@ -326,12 +347,10 @@ namespace Identity.Dapper.Repositories
 
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                        return await removeFunction(conn).ConfigureAwait(false);
-                    }
+                    return await removeFunction(conn).ConfigureAwait(false);
                 }
                 else
                 {
@@ -347,13 +366,10 @@ namespace Identity.Dapper.Repositories
             }
         }
 
-        public async Task<bool> UpdateAsync(TRole role, CancellationToken cancellationToken)
+        private async Task<bool> UpdateInternalAsync(
+            TRole role,
+            CancellationToken cancellationToken)
         {
-            if (role is null)
-            {
-                throw new ArgumentNullException(nameof(role));
-            }
-
             try
             {
                 var updateFunction = new Func<DbConnection, Task<bool>>(async x =>
@@ -369,11 +385,9 @@ namespace Identity.Dapper.Repositories
 
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
-                        return await updateFunction(conn).ConfigureAwait(false);
-                    }
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
+                    return await updateFunction(conn).ConfigureAwait(false);
                 }
                 else
                 {

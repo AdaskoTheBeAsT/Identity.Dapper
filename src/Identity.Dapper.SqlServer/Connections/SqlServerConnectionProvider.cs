@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Data.Common;
-using System.Data.SqlClient;
 using Identity.Dapper.Connections;
 using Identity.Dapper.Cryptography;
 using Identity.Dapper.Models;
+using Identity.Dapper.SqlServer.Exceptions;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
 
 namespace Identity.Dapper.SqlServer.Connections
@@ -15,25 +16,29 @@ namespace Identity.Dapper.SqlServer.Connections
 
         public SqlServerConnectionProvider(IOptions<ConnectionProviderOptions> connProvOpts, EncryptionHelper encHelper)
         {
-            _connectionProviderOptions = connProvOpts;
-            _encryptionHelper = encHelper;
+            _connectionProviderOptions = connProvOpts ?? throw new ArgumentNullException(nameof(connProvOpts));
+            _encryptionHelper = encHelper ?? throw new ArgumentNullException(nameof(encHelper));
         }
 
         public DbConnection Create()
         {
             if (_connectionProviderOptions.Value == null)
             {
-                throw new ArgumentNullException("There's no DapperIdentity configuration section registered. Please, register the section in appsettings.json or user secrets.");
+                throw new NoDapperIdentityConfigurationSectionRegisteredException(
+                    "There's no DapperIdentity configuration section registered. Please, register the section in appsettings.json or user secrets.");
             }
 
-            if (string.IsNullOrEmpty(_connectionProviderOptions.Value?.ConnectionString))
+            var connectionOptions = _connectionProviderOptions.Value!;
+
+            if (string.IsNullOrEmpty(connectionOptions.ConnectionString))
             {
-                throw new ArgumentNullException("There's no DapperIdentity:ConnectionString configured. Please, register the value.");
+                throw new NoDapperIdentityConnectionStringConfiguredException(
+                    "There's no DapperIdentity:ConnectionString configured. Please, register the value.");
             }
 
-            var connectionString = _connectionProviderOptions.Value.ConnectionString;
-            var username = _connectionProviderOptions.Value?.Username;
-            var password = _connectionProviderOptions.Value?.Password;
+            var connectionString = connectionOptions.ConnectionString!;
+            var username = connectionOptions.Username;
+            var password = connectionOptions.Password;
 
             // if both a username and password were provided, update the connection string with them
             // otherwise, leave the connection string that was configured alone
@@ -41,7 +46,7 @@ namespace Identity.Dapper.SqlServer.Connections
             {
                 var connectionStringBuilder = new SqlConnectionStringBuilder(connectionString)
                 {
-                    Password = _encryptionHelper.TryDecryptAES256(password),
+                    Password = _encryptionHelper.TryDecryptAES256(password ?? string.Empty),
                     UserID = username,
                 };
                 connectionString = connectionStringBuilder.ToString();

@@ -20,7 +20,9 @@ namespace Identity.Dapper.Queries
             _serviceProvider = serviceProvider;
         }
 
+#pragma warning disable MA0051 // Method is too long
         public ConcurrentDictionary<Type, IQuery> RetrieveQueryList()
+#pragma warning restore MA0051 // Method is too long
         {
             if (_dictionary.Count == 0)
             {
@@ -33,7 +35,7 @@ namespace Identity.Dapper.Queries
 
                 foreach (var type in exportedTypes)
                 {
-                    var getConstructorParameters = new Func<Type, List<object>>(x =>
+                    var getConstructorParameters = new Func<Type, List<object>>(_ =>
                     {
                         var constructorParameters = type.GetTypeInfo()
                             .DeclaredConstructors
@@ -51,9 +53,7 @@ namespace Identity.Dapper.Queries
 
                     if (typeof(IInsertQuery).IsAssignableFrom(type) && !type.IsAbstract)
                     {
-                        var instance =
-                            Activator.CreateInstance(type, getConstructorParameters(type).ToArray()) as IInsertQuery;
-                        if (instance != null)
+                        if (Activator.CreateInstance(type, getConstructorParameters(type).ToArray()) is IInsertQuery instance)
                         {
 #pragma warning disable PH_B007 // Non-Atomic Access to Concurrent Collection
                             _dictionary.TryAdd(type, instance);
@@ -62,9 +62,7 @@ namespace Identity.Dapper.Queries
                     }
                     else if (typeof(IDeleteQuery).IsAssignableFrom(type) && !type.IsAbstract)
                     {
-                        var instance =
-                            Activator.CreateInstance(type, getConstructorParameters(type).ToArray()) as IDeleteQuery;
-                        if (instance != null)
+                        if (Activator.CreateInstance(type, getConstructorParameters(type).ToArray()) is IDeleteQuery instance)
                         {
 #pragma warning disable PH_B007 // Non-Atomic Access to Concurrent Collection
                             _dictionary.TryAdd(type, instance);
@@ -73,25 +71,20 @@ namespace Identity.Dapper.Queries
                     }
                     else if (typeof(ISelectQuery).IsAssignableFrom(type) && !type.IsAbstract)
                     {
-                        var instance =
-                            Activator.CreateInstance(type, getConstructorParameters(type).ToArray()) as ISelectQuery;
-                        if (instance != null)
+                        if (Activator.CreateInstance(type, getConstructorParameters(type).ToArray()) is ISelectQuery instance)
                         {
 #pragma warning disable PH_B007 // Non-Atomic Access to Concurrent Collection
                             _dictionary.TryAdd(type, instance);
 #pragma warning restore PH_B007 // Non-Atomic Access to Concurrent Collection
                         }
                     }
-                    else if (typeof(IUpdateQuery).IsAssignableFrom(type) && !type.IsAbstract)
+                    else if (typeof(IUpdateQuery).IsAssignableFrom(type) && !type.IsAbstract &&
+                             Activator.CreateInstance(type, getConstructorParameters(type).ToArray()) is IUpdateQuery
+                                 instance)
                     {
-                        var instance =
-                            Activator.CreateInstance(type, getConstructorParameters(type).ToArray()) as IUpdateQuery;
-                        if (instance != null)
-                        {
 #pragma warning disable PH_B007 // Non-Atomic Access to Concurrent Collection
-                            _dictionary.TryAdd(type, instance);
+                        _dictionary.TryAdd(type, instance);
 #pragma warning restore PH_B007 // Non-Atomic Access to Concurrent Collection
-                        }
                     }
                 }
             }

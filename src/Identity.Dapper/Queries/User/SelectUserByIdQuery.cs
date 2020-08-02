@@ -14,6 +14,7 @@ namespace Identity.Dapper.Queries.User
 
         public string GetQuery()
         {
+#pragma warning disable SA1118 // Parameter should not span multiple lines
             var query = _sqlConfiguration.SelectUserByIdQuery
                 .ReplaceQueryParameters(
                     _sqlConfiguration.SchemaName,
@@ -26,6 +27,7 @@ namespace Identity.Dapper.Queries.User
                     {
                         _sqlConfiguration.UserTable, _sqlConfiguration.RoleTable, _sqlConfiguration.UserRoleTable,
                     });
+#pragma warning restore SA1118 // Parameter should not span multiple lines
 
             return query;
         }

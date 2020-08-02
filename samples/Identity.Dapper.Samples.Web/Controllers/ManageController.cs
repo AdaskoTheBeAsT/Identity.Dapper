@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Identity.Dapper.Samples.Web.Entities;
@@ -53,14 +54,16 @@ namespace Identity.Dapper.Samples.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(ManageMessageId? message = null)
         {
-            ViewData["StatusMessage"] =
-                message == ManageMessageId.ChangePasswordSuccess ? "Your password has been changed."
-                : message == ManageMessageId.SetPasswordSuccess ? "Your password has been set."
-                : message == ManageMessageId.SetTwoFactorSuccess ? "Your two-factor authentication provider has been set."
-                : message == ManageMessageId.Error ? "An error has occurred."
-                : message == ManageMessageId.AddPhoneSuccess ? "Your phone number was added."
-                : message == ManageMessageId.RemovePhoneSuccess ? "Your phone number was removed."
-                : string.Empty;
+            ViewData["StatusMessage"] = message switch
+            {
+                ManageMessageId.ChangePasswordSuccess => "Your password has been changed.",
+                ManageMessageId.SetPasswordSuccess => "Your password has been set.",
+                ManageMessageId.SetTwoFactorSuccess => "Your two-factor authentication provider has been set.",
+                ManageMessageId.Error => "An error has occurred.",
+                ManageMessageId.AddPhoneSuccess => "Your phone number was added.",
+                ManageMessageId.RemovePhoneSuccess => "Your phone number was removed.",
+                _ => string.Empty,
+            };
 
             var user = await GetCurrentUserAsync();
             var model = new IndexViewModel
@@ -77,8 +80,15 @@ namespace Identity.Dapper.Samples.Web.Controllers
         // POST: /Manage/RemoveLogin
         [HttpPost]
         [ValidateAntiForgeryToken]
+#pragma warning disable S4457 // Parameter validation in "async"/"await" methods should be wrapped
         public async Task<IActionResult> RemoveLogin(RemoveLoginViewModel account)
+#pragma warning restore S4457 // Parameter validation in "async"/"await" methods should be wrapped
         {
+            if (account is null)
+            {
+                throw new ArgumentNullException(nameof(account));
+            }
+
             ManageMessageId? message = ManageMessageId.Error;
             var user = await GetCurrentUserAsync();
             if (user != null)
@@ -103,8 +113,15 @@ namespace Identity.Dapper.Samples.Web.Controllers
         // POST: /Manage/AddPhoneNumber
         [HttpPost]
         [ValidateAntiForgeryToken]
+#pragma warning disable S4457 // Parameter validation in "async"/"await" methods should be wrapped
         public async Task<IActionResult> AddPhoneNumber(AddPhoneNumberViewModel model)
+#pragma warning restore S4457 // Parameter validation in "async"/"await" methods should be wrapped
         {
+            if (model is null)
+            {
+                throw new ArgumentNullException(nameof(model));
+            }
+
             if (!ModelState.IsValid)
             {
                 return View(model);
@@ -113,8 +130,8 @@ namespace Identity.Dapper.Samples.Web.Controllers
             // Generate the token and send it
             var user = await GetCurrentUserAsync();
             var code = await _userManager.GenerateChangePhoneNumberTokenAsync(user, model.PhoneNumber);
-            await _smsSender.SendSmsAsync(model.PhoneNumber, "Your security code is: " + code);
-            return RedirectToAction(nameof(VerifyPhoneNumber), new { PhoneNumber = model.PhoneNumber });
+            await _smsSender.SendSmsAsync(model.PhoneNumber ?? string.Empty, "Your security code is: " + code);
+            return RedirectToAction(nameof(VerifyPhoneNumber), new { model.PhoneNumber });
         }
 
         // POST: /Manage/EnableTwoFactorAuthentication
@@ -162,8 +179,15 @@ namespace Identity.Dapper.Samples.Web.Controllers
         // POST: /Manage/VerifyPhoneNumber
         [HttpPost]
         [ValidateAntiForgeryToken]
+#pragma warning disable S4457 // Parameter validation in "async"/"await" methods should be wrapped
         public async Task<IActionResult> VerifyPhoneNumber(VerifyPhoneNumberViewModel model)
+#pragma warning restore S4457 // Parameter validation in "async"/"await" methods should be wrapped
         {
+            if (model is null)
+            {
+                throw new ArgumentNullException(nameof(model));
+            }
+
             if (!ModelState.IsValid)
             {
                 return View(model);
@@ -214,8 +238,15 @@ namespace Identity.Dapper.Samples.Web.Controllers
         // POST: /Manage/ChangePassword
         [HttpPost]
         [ValidateAntiForgeryToken]
+#pragma warning disable S4457 // Parameter validation in "async"/"await" methods should be wrapped
         public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+#pragma warning restore S4457 // Parameter validation in "async"/"await" methods should be wrapped
         {
+            if (model is null)
+            {
+                throw new ArgumentNullException(nameof(model));
+            }
+
             if (!ModelState.IsValid)
             {
                 return View(model);
@@ -249,8 +280,15 @@ namespace Identity.Dapper.Samples.Web.Controllers
         // POST: /Manage/SetPassword
         [HttpPost]
         [ValidateAntiForgeryToken]
+#pragma warning disable S4457 // Parameter validation in "async"/"await" methods should be wrapped
         public async Task<IActionResult> SetPassword(SetPasswordViewModel model)
+#pragma warning restore S4457 // Parameter validation in "async"/"await" methods should be wrapped
         {
+            if (model is null)
+            {
+                throw new ArgumentNullException(nameof(model));
+            }
+
             if (!ModelState.IsValid)
             {
                 return View(model);
@@ -277,11 +315,14 @@ namespace Identity.Dapper.Samples.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> ManageLogins(ManageMessageId? message = null)
         {
-            ViewData["StatusMessage"] =
-                message == ManageMessageId.RemoveLoginSuccess ? "The external login was removed."
-                : message == ManageMessageId.AddLoginSuccess ? "The external login was added."
-                : message == ManageMessageId.Error ? "An error has occurred."
-                : string.Empty;
+            ViewData["StatusMessage"] = message switch
+            {
+                ManageMessageId.RemoveLoginSuccess => "The external login was removed.",
+                ManageMessageId.AddLoginSuccess => "The external login was added.",
+                ManageMessageId.Error => "An error has occurred.",
+                _ => string.Empty,
+            };
+
             var user = await GetCurrentUserAsync();
             if (user == null)
             {
@@ -290,7 +331,10 @@ namespace Identity.Dapper.Samples.Web.Controllers
 
             var userLogins = await _userManager.GetLoginsAsync(user);
             var schemes = await _authenticationSchemeProvider.GetAllSchemesAsync();
-            var otherLogins = schemes.Where(auth => userLogins.All(ul => auth.Name != ul.LoginProvider)).ToList();
+            var otherLogins = schemes.Where(
+                    auth => userLogins.All(
+                        ul => !auth.Name.Equals(ul.LoginProvider, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
             ViewData["ShowRemoveButton"] = user.PasswordHash != null || userLogins.Count > 1;
             return View(new ManageLoginsViewModel
             {
@@ -331,8 +375,6 @@ namespace Identity.Dapper.Samples.Web.Controllers
             return RedirectToAction(nameof(ManageLogins), new { Message = message });
         }
 
-        #region Helpers
-
         private void AddErrors(IdentityResult result)
         {
             foreach (var error in result.Errors)
@@ -345,7 +387,5 @@ namespace Identity.Dapper.Samples.Web.Controllers
         {
             return _userManager.GetUserAsync(HttpContext.User);
         }
-
-        #endregion
     }
 }

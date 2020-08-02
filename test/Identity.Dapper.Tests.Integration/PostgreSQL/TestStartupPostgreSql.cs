@@ -3,19 +3,24 @@ using Identity.Dapper.Entities;
 using Identity.Dapper.Models;
 using Identity.Dapper.PostgreSQL.Connections;
 using Identity.Dapper.PostgreSQL.Models;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Identity.Dapper.Tests.Integration.PostgreSQL
 {
     public class TestStartupPostgreSql
     {
-        public TestStartupPostgreSql(IHostingEnvironment env)
+        public TestStartupPostgreSql(IWebHostEnvironment env)
         {
+            if (env is null)
+            {
+                throw new ArgumentNullException(nameof(env));
+            }
+
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("integrationtest.config.psql.json", optional: false, reloadOnChange: true);
@@ -34,6 +39,13 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddLogging(
+                options =>
+                {
+                    options.AddConsole();
+                    options.AddDebug();
+                });
+
             services.ConfigureDapperConnectionProvider<PostgreSqlConnectionProvider>(Configuration.GetSection("DapperIdentity"))
                     .ConfigureDapperIdentityCryptography(Configuration.GetSection("DapperIdentityCryptography"))
                     .ConfigureDapperIdentityOptions(new DapperIdentityOptions { UseTransactionalBehavior = false }); // Change to True to use Transactions in all operations
@@ -52,18 +64,6 @@ namespace Identity.Dapper.Tests.Integration.PostgreSQL
             // Add application services.
             services.AddTransient<IEmailSender, FakeAuthMessageSender>();
             services.AddTransient<ISmsSender, FakeAuthMessageSender>();
-        }
-
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
-        {
-            if (loggerFactory is null)
-            {
-                throw new ArgumentNullException(nameof(loggerFactory));
-            }
-
-            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
-            loggerFactory.AddDebug();
         }
     }
 }

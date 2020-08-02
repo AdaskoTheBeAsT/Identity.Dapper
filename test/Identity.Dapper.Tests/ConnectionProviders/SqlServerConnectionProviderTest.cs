@@ -34,7 +34,7 @@ namespace Identity.Dapper.Tests.ConnectionProviders
         [Fact]
         public void WithUnencryptedCredentials()
         {
-            var connectionString = "Data Source=myServerName;Initial Catalog=myDataBase;User ID=xxxx;Password=xxxx";
+            const string connectionString = "Data Source=myServerName;Initial Catalog=myDataBase;User ID=xxxx;Password=xxxx";
             var options = new ConnectionProviderOptions
             {
                 ConnectionString = connectionString,
@@ -45,8 +45,8 @@ namespace Identity.Dapper.Tests.ConnectionProviders
             mock.Setup(x => x.Value).Returns(options);
             var connectionProvider = new SqlServerConnectionProvider(mock.Object, _encryptionHelper);
 
-            var connection = connectionProvider.Create();
-            var expected = "Data Source=myServerName;Initial Catalog=myDataBase;User ID=testUsername;Password=testPassword";
+            using var connection = connectionProvider.Create();
+            const string expected = "Data Source=myServerName;Initial Catalog=myDataBase;User ID=testUsername;Password=testPassword";
 
             // connection string should have username/password substituded in
             Assert.Equal(connection.ConnectionString, expected);
@@ -55,7 +55,7 @@ namespace Identity.Dapper.Tests.ConnectionProviders
         [Fact]
         public void WithEncryptedCredentials()
         {
-            var connectionString = "Data Source=myServerName;Initial Catalog=myDataBase;User ID=xxxx;Password=xxxx";
+            const string connectionString = "Data Source=myServerName;Initial Catalog=myDataBase;User ID=xxxx;Password=xxxx";
             var options = new ConnectionProviderOptions
             {
                 ConnectionString = connectionString,
@@ -66,8 +66,8 @@ namespace Identity.Dapper.Tests.ConnectionProviders
             mock.Setup(x => x.Value).Returns(options);
             var connectionProvider = new SqlServerConnectionProvider(mock.Object, _encryptionHelper);
 
-            var connection = connectionProvider.Create();
-            var expected = "Data Source=myServerName;Initial Catalog=myDataBase;User ID=testUsername;Password=testPassword";
+            using var connection = connectionProvider.Create();
+            const string expected = "Data Source=myServerName;Initial Catalog=myDataBase;User ID=testUsername;Password=testPassword";
 
             // connection string should have username/password substituded in
             Assert.Equal(connection.ConnectionString, expected);
@@ -76,7 +76,7 @@ namespace Identity.Dapper.Tests.ConnectionProviders
         [Fact]
         public void WithoutCredentials()
         {
-            var connectionString = "Data Source=myServerName;Initial Catalog=myDataBase;User ID=xxxx;Password=xxxx";
+            const string connectionString = "Data Source=myServerName;Initial Catalog=myDataBase;User ID=xxxx;Password=xxxx";
             var options = new ConnectionProviderOptions
             {
                 ConnectionString = connectionString,
@@ -87,7 +87,7 @@ namespace Identity.Dapper.Tests.ConnectionProviders
             mock.Setup(x => x.Value).Returns(options);
             var connectionProvider = new SqlServerConnectionProvider(mock.Object, _encryptionHelper);
 
-            var connection = connectionProvider.Create();
+            using var connection = connectionProvider.Create();
 
             // connection string should be unchanged
             Assert.Equal(connection.ConnectionString, connectionString);

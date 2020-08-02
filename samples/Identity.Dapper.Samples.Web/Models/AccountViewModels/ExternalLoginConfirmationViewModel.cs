@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace Identity.Dapper.Samples.Web.Models.AccountViewModels
 {
@@ -6,6 +6,6 @@ namespace Identity.Dapper.Samples.Web.Models.AccountViewModels
     {
         [Required]
         [EmailAddress]
-        public string Email { get; set; }
+        public string? Email { get; set; }
     }
 }

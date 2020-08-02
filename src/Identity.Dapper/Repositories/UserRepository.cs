@@ -51,9 +51,9 @@ namespace Identity.Dapper.Repositories
             _queryFactory = queryFactory;
         }
 
-        public Task<IEnumerable<TUser>> GetAllAsync() => throw new NotImplementedException();
+        public Task<IEnumerable<TUser>> GetAllAsync(CancellationToken cancellationToken) => throw new NotImplementedException();
 
-        public async Task<TUser> GetByEmailAsync(string email)
+        public async Task<TUser> GetByEmailAsync(string email, CancellationToken cancellationToken)
         {
             try
             {
@@ -83,12 +83,10 @@ namespace Identity.Dapper.Repositories
 
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync().ConfigureAwait(false);
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                        return await selectFunction(conn).ConfigureAwait(false);
-                    }
+                    return await selectFunction(conn).ConfigureAwait(false);
                 }
                 else
                 {
@@ -106,7 +104,7 @@ namespace Identity.Dapper.Repositories
             }
         }
 
-        public async Task<TUser> GetByIdAsync(TKey id)
+        public async Task<TUser> GetByIdAsync(TKey id, CancellationToken cancellationToken)
         {
             try
             {
@@ -136,12 +134,10 @@ namespace Identity.Dapper.Repositories
 
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync().ConfigureAwait(false);
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                        return await selectFunction(conn).ConfigureAwait(false);
-                    }
+                    return await selectFunction(conn).ConfigureAwait(false);
                 }
                 else
                 {
@@ -157,7 +153,7 @@ namespace Identity.Dapper.Repositories
             }
         }
 
-        public async Task<TUser> GetByUserNameAsync(string userName)
+        public async Task<TUser> GetByUserNameAsync(string userName, CancellationToken cancellationToken)
         {
             try
             {
@@ -197,12 +193,10 @@ namespace Identity.Dapper.Repositories
 
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync().ConfigureAwait(false);
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                        return await selectFunction(conn).ConfigureAwait(false);
-                    }
+                    return await selectFunction(conn).ConfigureAwait(false);
                 }
                 else
                 {
@@ -246,12 +240,10 @@ namespace Identity.Dapper.Repositories
 
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                        return await insertFunction(conn).ConfigureAwait(false);
-                    }
+                    return await insertFunction(conn).ConfigureAwait(false);
                 }
                 else
                 {
@@ -267,125 +259,24 @@ namespace Identity.Dapper.Repositories
             }
         }
 
-        public async Task<bool> InsertClaimsAsync(TKey id, IEnumerable<Claim> claims, CancellationToken cancellationToken)
+        public Task<bool> InsertClaimsAsync(TKey id, IEnumerable<Claim> claims, CancellationToken cancellationToken)
         {
             if (claims is null)
             {
                 throw new ArgumentNullException(nameof(claims));
             }
 
-            try
-            {
-                var insertFunction = new Func<DbConnection, Task<bool>>(async x =>
-                {
-                    try
-                    {
-                        var resultList = new List<bool>(claims.Count());
-                        foreach (var claim in claims)
-                        {
-                            var userClaim = Activator.CreateInstance<TUserClaim>();
-                            userClaim.UserId = id;
-                            userClaim.ClaimType = claim.Type;
-                            userClaim.ClaimValue = claim.Value;
-
-                            var query = _queryFactory.GetInsertQuery<InsertUserClaimQuery, TUserClaim>(userClaim);
-
-                            resultList.Add(
-                                await x.ExecuteAsync(query, userClaim, _unitOfWork.Transaction).ConfigureAwait(false) > 0);
-                        }
-
-                        return resultList.TrueForAll(y => y);
-                    }
-                    catch (Exception ex)
-                    {
-                        _log.LogError(ex, ex.Message);
-
-                        throw;
-                    }
-                });
-
-                if (_unitOfWork?.Connection == null)
-                {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
-
-                        return await insertFunction(conn).ConfigureAwait(false);
-                    }
-                }
-                else
-                {
-                    var conn = _unitOfWork.CreateOrGetConnection();
-
-                    return await insertFunction(conn).ConfigureAwait(false);
-                }
-            }
-            catch (Exception ex)
-            {
-                _log.LogError(ex, ex.Message);
-
-                throw;
-            }
+            return InsertClaimsInternalAsync(id, claims, cancellationToken);
         }
 
-        public async Task<bool> InsertLoginInfoAsync(TKey id, UserLoginInfo loginInfo, CancellationToken cancellationToken)
+        public Task<bool> InsertLoginInfoAsync(TKey id, UserLoginInfo loginInfo, CancellationToken cancellationToken)
         {
             if (loginInfo is null)
             {
                 throw new ArgumentNullException(nameof(loginInfo));
             }
 
-            try
-            {
-                var insertFunction = new Func<DbConnection, Task<bool>>(async x =>
-                {
-                    try
-                    {
-                        dynamic userLogin = new
-                        {
-                            UserId = id,
-                            loginInfo.LoginProvider,
-                            loginInfo.ProviderKey,
-                            Name = loginInfo.ProviderDisplayName,
-                        };
-
-                        var query = (string)_queryFactory.GetInsertQuery<InsertUserLoginQuery, dynamic>(userLogin);
-
-                        var result = await x.ExecuteAsync(query, (object)userLogin, _unitOfWork.Transaction)
-                            .ConfigureAwait(false);
-
-                        return result > 0;
-                    }
-                    catch (Exception ex)
-                    {
-                        _log.LogError(ex, ex.Message);
-
-                        throw;
-                    }
-                });
-
-                if (_unitOfWork?.Connection == null)
-                {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
-
-                        return await insertFunction(conn).ConfigureAwait(false);
-                    }
-                }
-                else
-                {
-                    var conn = _unitOfWork.CreateOrGetConnection();
-
-                    return await insertFunction(conn).ConfigureAwait(false);
-                }
-            }
-            catch (Exception ex)
-            {
-                _log.LogError(ex, ex.Message);
-
-                throw;
-            }
+            return InsertLoginInfoInternalAsync(id, loginInfo, cancellationToken);
         }
 
         public async Task<bool> AddToRoleAsync(TKey id, string roleName, CancellationToken cancellationToken)
@@ -396,7 +287,7 @@ namespace Identity.Dapper.Repositories
                 {
                     try
                     {
-                        var role = await _roleRepository.GetByNameAsync(roleName).ConfigureAwait(false);
+                        var role = await _roleRepository.GetByNameAsync(roleName, cancellationToken).ConfigureAwait(false);
                         if (role == null)
                         {
                             return false;
@@ -422,12 +313,10 @@ namespace Identity.Dapper.Repositories
 
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                        return await insertFunction(conn).ConfigureAwait(false);
-                    }
+                    return await insertFunction(conn).ConfigureAwait(false);
                 }
                 else
                 {
@@ -470,12 +359,10 @@ namespace Identity.Dapper.Repositories
 
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                        return await removeFunction(conn).ConfigureAwait(false);
-                    }
+                    return await removeFunction(conn).ConfigureAwait(false);
                 }
                 else
                 {
@@ -518,11 +405,9 @@ namespace Identity.Dapper.Repositories
 
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
-                        return await updateFunction(conn).ConfigureAwait(false);
-                    }
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
+                    return await updateFunction(conn).ConfigureAwait(false);
                 }
                 else
                 {
@@ -539,7 +424,7 @@ namespace Identity.Dapper.Repositories
             }
         }
 
-        public async Task<TUser> GetByUserLoginAsync(string loginProvider, string providerKey)
+        public async Task<TUser> GetByUserLoginAsync(string loginProvider, string providerKey, CancellationToken cancellationToken)
         {
             try
             {
@@ -578,11 +463,9 @@ namespace Identity.Dapper.Repositories
 
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync().ConfigureAwait(false);
-                        return await selectFunction(conn).ConfigureAwait(false);
-                    }
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
+                    return await selectFunction(conn).ConfigureAwait(false);
                 }
                 else
                 {
@@ -597,7 +480,7 @@ namespace Identity.Dapper.Repositories
             }
         }
 
-        public async Task<IList<Claim>> GetClaimsByUserIdAsync(TKey id)
+        public async Task<IList<Claim>> GetClaimsByUserIdAsync(TKey id, CancellationToken cancellationToken)
         {
             try
             {
@@ -613,12 +496,10 @@ namespace Identity.Dapper.Repositories
 
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync().ConfigureAwait(false);
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                        return await selectFunction(conn).ConfigureAwait(false);
-                    }
+                    return await selectFunction(conn).ConfigureAwait(false);
                 }
                 else
                 {
@@ -634,7 +515,7 @@ namespace Identity.Dapper.Repositories
             }
         }
 
-        public async Task<IList<string>> GetRolesByUserIdAsync(TKey id)
+        public async Task<IList<string>> GetRolesByUserIdAsync(TKey id, CancellationToken cancellationToken)
         {
             try
             {
@@ -649,12 +530,10 @@ namespace Identity.Dapper.Repositories
 
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync().ConfigureAwait(false);
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                        return await selectFunction(conn).ConfigureAwait(false);
-                    }
+                    return await selectFunction(conn).ConfigureAwait(false);
                 }
                 else
                 {
@@ -670,7 +549,7 @@ namespace Identity.Dapper.Repositories
             }
         }
 
-        public async Task<IList<UserLoginInfo>> GetUserLoginInfoByIdAsync(TKey id)
+        public async Task<IList<UserLoginInfo>> GetUserLoginInfoByIdAsync(TKey id, CancellationToken cancellationToken)
         {
             try
             {
@@ -686,12 +565,10 @@ namespace Identity.Dapper.Repositories
 
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync().ConfigureAwait(false);
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                        return await selectFunction(conn).ConfigureAwait(false);
-                    }
+                    return await selectFunction(conn).ConfigureAwait(false);
                 }
                 else
                 {
@@ -707,56 +584,17 @@ namespace Identity.Dapper.Repositories
             }
         }
 
-        public async Task<IList<TUser>> GetUsersByClaimAsync(Claim claim)
+        public Task<IList<TUser>> GetUsersByClaimAsync(Claim claim, CancellationToken cancellationToken)
         {
             if (claim is null)
             {
                 throw new ArgumentNullException(nameof(claim));
             }
 
-            try
-            {
-                var selectFunction = new Func<DbConnection, Task<IList<TUser>>>(async x =>
-                {
-                    var defaultUser = Activator.CreateInstance<TUser>();
-                    var query = _queryFactory.GetQuery<GetUsersByClaimQuery, TUser>(defaultUser);
-
-                    var result = await x.QueryAsync<TUser>(
-                        sql: query,
-                        param: new
-                        {
-                            ClaimValue = claim.Value,
-                            ClaimType = claim.Type,
-                        },
-                        transaction: _unitOfWork.Transaction).ConfigureAwait(false);
-
-                    return result.ToList();
-                });
-
-                if (_unitOfWork?.Connection == null)
-                {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync().ConfigureAwait(false);
-
-                        return await selectFunction(conn).ConfigureAwait(false);
-                    }
-                }
-                else
-                {
-                    var conn = _unitOfWork.CreateOrGetConnection();
-                    return await selectFunction(conn).ConfigureAwait(false);
-                }
-            }
-            catch (Exception ex)
-            {
-                _log.LogError(ex, ex.Message);
-
-                throw;
-            }
+            return GetUsersByClaimInternalAsync(claim, cancellationToken);
         }
 
-        public async Task<IList<TUser>> GetUsersInRoleAsync(string roleName)
+        public async Task<IList<TUser>> GetUsersInRoleAsync(string roleName, CancellationToken cancellationToken)
         {
             try
             {
@@ -780,12 +618,10 @@ namespace Identity.Dapper.Repositories
 
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync().ConfigureAwait(false);
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                        return await selectFunction(conn).ConfigureAwait(false);
-                    }
+                    return await selectFunction(conn).ConfigureAwait(false);
                 }
                 else
                 {
@@ -801,7 +637,7 @@ namespace Identity.Dapper.Repositories
             }
         }
 
-        public async Task<bool> IsInRoleAsync(TKey id, string roleName)
+        public async Task<bool> IsInRoleAsync(TKey id, string roleName, CancellationToken cancellationToken)
         {
             try
             {
@@ -826,12 +662,10 @@ namespace Identity.Dapper.Repositories
 
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync().ConfigureAwait(false);
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                        return await selectFunction(conn).ConfigureAwait(false);
-                    }
+                    return await selectFunction(conn).ConfigureAwait(false);
                 }
                 else
                 {
@@ -847,67 +681,14 @@ namespace Identity.Dapper.Repositories
             }
         }
 
-        public async Task<bool> RemoveClaimsAsync(TKey id, IEnumerable<Claim> claims, CancellationToken cancellationToken)
+        public Task<bool> RemoveClaimsAsync(TKey id, IEnumerable<Claim> claims, CancellationToken cancellationToken)
         {
             if (claims is null)
             {
                 throw new ArgumentNullException(nameof(claims));
             }
 
-            try
-            {
-                var removeFunction = new Func<DbConnection, Task<bool>>(async x =>
-                {
-                    try
-                    {
-                        var query = _queryFactory.GetDeleteQuery<RemoveClaimsQuery>();
-
-                        var resultList = new List<bool>(claims.Count());
-                        foreach (var claim in claims)
-                        {
-                            resultList.Add(
-                                await x.ExecuteAsync(
-                                    query,
-                                    new
-                                    {
-                                        UserId = id,
-                                        ClaimValue = claim.Value,
-                                        ClaimType = claim.Type,
-                                    },
-                                    _unitOfWork.Transaction).ConfigureAwait(false) > 0);
-                        }
-
-                        return resultList.TrueForAll(y => y);
-                    }
-                    catch (Exception ex)
-                    {
-                        _log.LogError(ex, ex.Message);
-
-                        throw;
-                    }
-                });
-
-                if (_unitOfWork?.Connection == null)
-                {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
-
-                        return await removeFunction(conn).ConfigureAwait(false);
-                    }
-                }
-                else
-                {
-                    var conn = _unitOfWork.CreateOrGetConnection();
-                    return await removeFunction(conn).ConfigureAwait(false);
-                }
-            }
-            catch (Exception ex)
-            {
-                _log.LogError(ex, ex.Message);
-
-                throw;
-            }
+            return RemoveClaimsInternalAsync(id, claims, cancellationToken);
         }
 
         public async Task<bool> RemoveFromRoleAsync(TKey id, string roleName, CancellationToken cancellationToken)
@@ -942,12 +723,10 @@ namespace Identity.Dapper.Repositories
 
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                        return await removeFunction(conn).ConfigureAwait(false);
-                    }
+                    return await removeFunction(conn).ConfigureAwait(false);
                 }
                 else
                 {
@@ -996,12 +775,10 @@ namespace Identity.Dapper.Repositories
 
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                        return await removeFunction(conn).ConfigureAwait(false);
-                    }
+                    return await removeFunction(conn).ConfigureAwait(false);
                 }
                 else
                 {
@@ -1018,7 +795,7 @@ namespace Identity.Dapper.Repositories
             }
         }
 
-        public async Task<bool> UpdateClaimAsync(TKey id, Claim oldClaim, Claim newClaim, CancellationToken cancellationToken)
+        public Task<bool> UpdateClaimAsync(TKey id, Claim oldClaim, Claim newClaim, CancellationToken cancellationToken)
         {
             if (oldClaim is null)
             {
@@ -1030,6 +807,260 @@ namespace Identity.Dapper.Repositories
                 throw new ArgumentNullException(nameof(newClaim));
             }
 
+            return UpdateClaimInternalAsync(id, oldClaim, newClaim, cancellationToken);
+        }
+
+        private static Func<TUser, TUserRole, TUser> UserRoleMapping(Dictionary<TKey, TUser> userDictionary)
+        {
+            return (user, role) =>
+            {
+                var dictionaryUser = default(TUser);
+
+                if (role != null)
+                {
+                    if (userDictionary.TryGetValue(user.Id, out dictionaryUser))
+                    {
+                        dictionaryUser.Roles.Add(role);
+                    }
+                    else
+                    {
+                        user.Roles.Add(role);
+                        userDictionary.Add(user.Id, user);
+
+                        dictionaryUser = user;
+                    }
+                }
+                else
+                {
+                    dictionaryUser = user;
+                }
+
+                return dictionaryUser;
+            };
+        }
+
+        private async Task<bool> InsertClaimsInternalAsync(
+            TKey id,
+            IEnumerable<Claim> claims,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var insertFunction = new Func<DbConnection, Task<bool>>(async x =>
+                {
+                    try
+                    {
+                        var resultList = new List<bool>(claims.Count());
+                        foreach (var claim in claims)
+                        {
+                            var userClaim = Activator.CreateInstance<TUserClaim>();
+                            userClaim.UserId = id;
+                            userClaim.ClaimType = claim.Type;
+                            userClaim.ClaimValue = claim.Value;
+
+                            var query = _queryFactory.GetInsertQuery<InsertUserClaimQuery, TUserClaim>(userClaim);
+
+                            resultList.Add(
+                                await x.ExecuteAsync(query, userClaim, _unitOfWork.Transaction).ConfigureAwait(false) > 0);
+                        }
+
+                        return resultList.TrueForAll(y => y);
+                    }
+                    catch (Exception ex)
+                    {
+                        _log.LogError(ex, ex.Message);
+
+                        throw;
+                    }
+                });
+
+                if (_unitOfWork?.Connection == null)
+                {
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+                    return await insertFunction(conn).ConfigureAwait(false);
+                }
+                else
+                {
+                    var conn = _unitOfWork.CreateOrGetConnection();
+
+                    return await insertFunction(conn).ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, ex.Message);
+
+                throw;
+            }
+        }
+
+        private async Task<bool> InsertLoginInfoInternalAsync(
+            TKey id,
+            UserLoginInfo loginInfo,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var insertFunction = new Func<DbConnection, Task<bool>>(async x =>
+                {
+                    try
+                    {
+                        dynamic userLogin = new
+                        {
+                            UserId = id,
+                            loginInfo.LoginProvider,
+                            loginInfo.ProviderKey,
+                            Name = loginInfo.ProviderDisplayName,
+                        };
+
+                        var query = (string)_queryFactory.GetInsertQuery<InsertUserLoginQuery, dynamic>(userLogin);
+
+                        var result = await x.ExecuteAsync(query, (object)userLogin, _unitOfWork.Transaction)
+                            .ConfigureAwait(false);
+
+                        return result > 0;
+                    }
+                    catch (Exception ex)
+                    {
+                        _log.LogError(ex, ex.Message);
+
+                        throw;
+                    }
+                });
+
+                if (_unitOfWork?.Connection == null)
+                {
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+                    return await insertFunction(conn).ConfigureAwait(false);
+                }
+                else
+                {
+                    var conn = _unitOfWork.CreateOrGetConnection();
+
+                    return await insertFunction(conn).ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, ex.Message);
+
+                throw;
+            }
+        }
+
+        private async Task<IList<TUser>> GetUsersByClaimInternalAsync(
+            Claim claim,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var selectFunction = new Func<DbConnection, Task<IList<TUser>>>(async x =>
+                {
+                    var defaultUser = Activator.CreateInstance<TUser>();
+                    var query = _queryFactory.GetQuery<GetUsersByClaimQuery, TUser>(defaultUser);
+
+                    var result = await x.QueryAsync<TUser>(
+                        sql: query,
+                        param: new
+                        {
+                            ClaimValue = claim.Value,
+                            ClaimType = claim.Type,
+                        },
+                        transaction: _unitOfWork.Transaction).ConfigureAwait(false);
+
+                    return result.ToList();
+                });
+
+                if (_unitOfWork?.Connection == null)
+                {
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+                    return await selectFunction(conn).ConfigureAwait(false);
+                }
+                else
+                {
+                    var conn = _unitOfWork.CreateOrGetConnection();
+                    return await selectFunction(conn).ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, ex.Message);
+
+                throw;
+            }
+        }
+
+        private async Task<bool> RemoveClaimsInternalAsync(
+            TKey id,
+            IEnumerable<Claim> claims,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var removeFunction = new Func<DbConnection, Task<bool>>(async x =>
+                {
+                    try
+                    {
+                        var query = _queryFactory.GetDeleteQuery<RemoveClaimsQuery>();
+
+                        var resultList = new List<bool>(claims.Count());
+                        foreach (var claim in claims)
+                        {
+                            resultList.Add(
+                                await x.ExecuteAsync(
+                                    query,
+                                    new
+                                    {
+                                        UserId = id,
+                                        ClaimValue = claim.Value,
+                                        ClaimType = claim.Type,
+                                    },
+                                    _unitOfWork.Transaction).ConfigureAwait(false) > 0);
+                        }
+
+                        return resultList.TrueForAll(y => y);
+                    }
+                    catch (Exception ex)
+                    {
+                        _log.LogError(ex, ex.Message);
+
+                        throw;
+                    }
+                });
+
+                if (_unitOfWork?.Connection == null)
+                {
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+                    return await removeFunction(conn).ConfigureAwait(false);
+                }
+                else
+                {
+                    var conn = _unitOfWork.CreateOrGetConnection();
+                    return await removeFunction(conn).ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, ex.Message);
+
+                throw;
+            }
+        }
+
+        private async Task<bool> UpdateClaimInternalAsync(
+            TKey id,
+            Claim oldClaim,
+            Claim newClaim,
+            CancellationToken cancellationToken)
+        {
             try
             {
                 var removeFunction = new Func<DbConnection, Task<bool>>(async x =>
@@ -1065,12 +1096,10 @@ namespace Identity.Dapper.Repositories
 
                 if (_unitOfWork?.Connection == null)
                 {
-                    using (var conn = _connectionProvider.Create())
-                    {
-                        await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
+                    using var conn = _connectionProvider.Create();
+                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                        return await removeFunction(conn).ConfigureAwait(false);
-                    }
+                    return await removeFunction(conn).ConfigureAwait(false);
                 }
                 else
                 {
@@ -1085,35 +1114,6 @@ namespace Identity.Dapper.Repositories
 
                 throw;
             }
-        }
-
-        private static Func<TUser, TUserRole, TUser> UserRoleMapping(Dictionary<TKey, TUser> userDictionary)
-        {
-            return new Func<TUser, TUserRole, TUser>((user, role) =>
-            {
-                var dictionaryUser = default(TUser);
-
-                if (role != null)
-                {
-                    if (userDictionary.TryGetValue(user.Id, out dictionaryUser))
-                    {
-                        dictionaryUser.Roles.Add(role);
-                    }
-                    else
-                    {
-                        user.Roles.Add(role);
-                        userDictionary.Add(user.Id, user);
-
-                        dictionaryUser = user;
-                    }
-                }
-                else
-                {
-                    dictionaryUser = user;
-                }
-
-                return dictionaryUser;
-            });
         }
     }
 }

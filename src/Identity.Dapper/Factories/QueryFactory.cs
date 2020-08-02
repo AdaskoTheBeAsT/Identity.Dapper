@@ -75,8 +75,9 @@ namespace Identity.Dapper.Factories
             }
         }
 
-        public string GetUpdateQuery<TQuery, TEntity>(TEntity entity)
+        public string GetUpdateQuery<TQuery, TEntity>(TEntity? entity)
             where TQuery : IUpdateQuery
+            where TEntity : class
         {
             try
             {

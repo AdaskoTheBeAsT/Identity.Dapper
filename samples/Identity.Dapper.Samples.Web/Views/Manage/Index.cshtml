@@ -1,4 +1,4 @@
-﻿@model IndexViewModel
+@model IndexViewModel
 @{
     ViewData["Title"] = "Manage your account";
 }
@@ -24,7 +24,7 @@
         <dt>External Logins:</dt>
         <dd>
 
-            @Model.Logins.Count <a asp-controller="Manage" asp-action="ManageLogins" class="btn-bracketed">Manage</a>
+            @Model?.Logins?.Count <a asp-controller="Manage" asp-action="ManageLogins" class="btn-bracketed">Manage</a>
         </dd>
         <dt>Phone Number:</dt>
         <dd>

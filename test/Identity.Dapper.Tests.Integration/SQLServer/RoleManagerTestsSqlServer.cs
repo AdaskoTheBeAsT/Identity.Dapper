@@ -31,7 +31,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(501)]
-        public async Task CanCreate()
+        public async Task CanCreateAsync()
         {
             var result = await _roleManager.CreateAsync(new DapperIdentityRole { Name = "test" });
             var result2 = await _roleManager.CreateAsync(new DapperIdentityRole { Name = "test2" });
@@ -46,7 +46,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(502)]
-        public async Task CanFindByName()
+        public async Task CanFindByNameAsync()
         {
             var role = await _roleManager.FindByNameAsync("test");
 
@@ -55,7 +55,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(503)]
-        public async Task CanFindById()
+        public async Task CanFindByIdAsync()
         {
             var role = await _roleManager.FindByIdAsync(1.ToString(CultureInfo.InvariantCulture));
 
@@ -64,7 +64,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(504)]
-        public async Task CanRemove()
+        public async Task CanRemoveAsync()
         {
             await _roleManager.CreateAsync(new DapperIdentityRole { Name = "test4" });
 
@@ -79,7 +79,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(505)]
-        public async Task CanRoleExists()
+        public async Task CanRoleExistsAsync()
         {
             var result = await _roleManager.RoleExistsAsync("test");
 
@@ -88,7 +88,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(506)]
-        public async Task CanUpdate()
+        public async Task CanUpdateAsync()
         {
             var role = await _roleManager.FindByNameAsync("test");
             role.Name = "testmodified";
@@ -100,7 +100,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(507)]
-        public async Task CanAddRoleToUser()
+        public async Task CanAddRoleToUserAsync()
         {
             await _userManager.CreateAsync(new DapperIdentityUser { UserName = "testrole", Email = "test@test.com" }, "123456");
 
@@ -113,7 +113,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(508)]
-        public async Task CanAddRolesToUser()
+        public async Task CanAddRolesToUserAsync()
         {
             var user = await _userManager.FindByNameAsync("testrole");
 
@@ -124,7 +124,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(509)]
-        public async Task CanGetRoles()
+        public async Task CanGetRolesAsync()
         {
             var user = await _userManager.FindByNameAsync("testrole");
 
@@ -141,7 +141,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(510)]
-        public async Task CanGetUsersInRole()
+        public async Task CanGetUsersInRoleAsync()
         {
             var result = await _userManager.GetUsersInRoleAsync("testmodified");
 
@@ -150,7 +150,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(511)]
-        public async Task CanCheckIfUserIsInRole()
+        public async Task CanCheckIfUserIsInRoleAsync()
         {
             var user = await _userManager.FindByNameAsync("testrole");
 
@@ -161,7 +161,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(512)]
-        public async Task CanRemoveUserFromRole()
+        public async Task CanRemoveUserFromRoleAsync()
         {
             var user = await _userManager.FindByNameAsync("testrole");
 
@@ -172,7 +172,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(513)]
-        public async Task CanRemoveUserFromRoles()
+        public async Task CanRemoveUserFromRolesAsync()
         {
             var user = await _userManager.FindByNameAsync("testrole");
 
@@ -183,7 +183,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(514)]
-        public async Task FindByEmailReturnRoles()
+        public async Task FindByEmailReturnRolesAsync()
         {
             var user = await _userManager.FindByEmailAsync("test@test.com");
 
@@ -192,7 +192,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(515)]
-        public async Task FindByNameReturnRoles()
+        public async Task FindByNameReturnRolesAsync()
         {
             var user = await _userManager.FindByNameAsync("testrole");
 
@@ -201,7 +201,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(516)]
-        public async Task FindByIdReturnRoles()
+        public async Task FindByIdReturnRolesAsync()
         {
             var user = await _userManager.FindByIdAsync("1");
 
@@ -210,7 +210,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(517)]
-        public async Task FindByLoginReturnRoles()
+        public async Task FindByLoginReturnRolesAsync()
         {
             await _userManager.CreateAsync(new DapperIdentityUser { UserName = "testrole2", Email = "test2@test.com" }, "123456");
 
@@ -227,7 +227,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(518)]
-        public async Task CanAddRoleClaim()
+        public async Task CanAddRoleClaimAsync()
         {
             var role = await _roleManager.FindByNameAsync("test3");
 
@@ -240,7 +240,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(519)]
-        public async Task CanListRoleClaim()
+        public async Task CanListRoleClaimAsync()
         {
             var role = await _roleManager.FindByNameAsync("test3");
 
@@ -252,7 +252,7 @@ namespace Identity.Dapper.Tests.Integration.SQLServer
 
         [Fact]
         [TestPriority(520)]
-        public async Task CanRemoveRoleClaim()
+        public async Task CanRemoveRoleClaimAsync()
         {
             var role = await _roleManager.FindByNameAsync("test3");
 

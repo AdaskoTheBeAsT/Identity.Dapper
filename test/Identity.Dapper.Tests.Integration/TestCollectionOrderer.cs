@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Xunit.Abstractions;
@@ -11,14 +11,24 @@ namespace Identity.Dapper.Tests.Integration
         public const string TypeName = "Identity.Dapper.Tests.Integration.TestCollectionOrderer";
         public const string AssemblyName = "Identity.Dapper.Tests.Integration";
 
-        public IEnumerable<TTestCase> OrderTestCases<TTestCase>(IEnumerable<TTestCase> testCases) where TTestCase : ITestCase
+        public IEnumerable<TTestCase> OrderTestCases<TTestCase>(IEnumerable<TTestCase> testCases)
+            where TTestCase : ITestCase
         {
+            if (testCases is null)
+            {
+                throw new ArgumentNullException(nameof(testCases));
+            }
+
             var sortedMethods = new SortedDictionary<int, TTestCase>();
 
             foreach (TTestCase testCase in testCases)
             {
                 var attribute = testCase.TestMethod.Method.GetCustomAttributes(typeof(TestPriorityAttribute).AssemblyQualifiedName)
                                                           .FirstOrDefault();
+                if (attribute is null)
+                {
+                    continue;
+                }
 
                 var priority = attribute.GetNamedArgument<int>("Priority");
                 sortedMethods.Add(priority, testCase);
@@ -26,16 +36,5 @@ namespace Identity.Dapper.Tests.Integration
 
             return sortedMethods.Values;
         }
-    }
-
-    [AttributeUsage(AttributeTargets.Method)]
-    public sealed class TestPriorityAttribute : Attribute
-    {
-        public TestPriorityAttribute(int priority)
-        {
-            this.Priority = priority;
-        }
-
-        public int Priority { get; set; }
     }
 }

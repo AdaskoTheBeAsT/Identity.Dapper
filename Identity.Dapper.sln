@@ -44,6 +44,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".props", ".props", "{81C808
 		IdentityTablesMySql.sql = IdentityTablesMySql.sql
 		IdentityTablesPostgreSql.sql = IdentityTablesPostgreSql.sql
 		IdentityTablesSqlServer.sql = IdentityTablesSqlServer.sql
+		LICENSE = LICENSE
 		README.md = README.md
 		SecurityCodeScan.config.yml = SecurityCodeScan.config.yml
 		Settings.StyleCop = Settings.StyleCop

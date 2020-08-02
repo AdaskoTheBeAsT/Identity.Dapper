@@ -54,7 +54,7 @@ namespace Identity.Dapper.Models
 
         public string TableColumnEndNotation { get; set; }
 
-        #region Table Names
+        // Table Names
         public string RoleTable { get; set; }
 
         public string UserTable { get; set; }
@@ -66,9 +66,8 @@ namespace Identity.Dapper.Models
         public string UserRoleTable { get; set; }
 
         public string RoleClaimTable { get; set; }
-        #endregion
 
-        #region Role Queries
+        // Role Queries
         public string InsertRoleQuery { get; set; }
 
         public string DeleteRoleQuery { get; set; }
@@ -84,9 +83,8 @@ namespace Identity.Dapper.Models
         public string InsertRoleClaimQuery { get; set; }
 
         public string DeleteRoleClaimQuery { get; set; }
-        #endregion
 
-        #region User Queries
+        // User Queries
         public string InsertUserQuery { get; set; }
 
         public string DeleteUserQuery { get; set; }
@@ -126,6 +124,5 @@ namespace Identity.Dapper.Models
         public string RemoveLoginForUserQuery { get; set; }
 
         public string UpdateClaimForUserQuery { get; set; }
-        #endregion
     }
 }

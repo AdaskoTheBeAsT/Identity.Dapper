@@ -25,6 +25,7 @@ namespace Identity.Dapper.Queries.User
                 ignoreIdProperty: true,
                 ignoreProperties: new string[] { "ConcurrencyStamp" });
 
+#pragma warning disable SA1118 // Parameter should not span multiple lines
             var query = _sqlConfiguration.GetUsersByClaimQuery
                 .ReplaceQueryParameters(
                     _sqlConfiguration.SchemaName,
@@ -39,6 +40,7 @@ namespace Identity.Dapper.Queries.User
                         _sqlConfiguration.UserTable,
                         _sqlConfiguration.UserClaimTable,
                     });
+#pragma warning restore SA1118 // Parameter should not span multiple lines
 
             return query;
         }

@@ -45,7 +45,7 @@ namespace Identity.Dapper.Stores
             _dapperIdentityOptions = dapperIdOpts;
         }
 
-        public Task SaveChangesAsync(CancellationToken cancellationToken = default(CancellationToken)) =>
+        public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
             !_dapperIdentityOptions.UseTransactionalBehavior
                         ? Task.CompletedTask
                         : CommitTransactionAsync(cancellationToken);
@@ -118,7 +118,7 @@ namespace Identity.Dapper.Stores
         {
             if (id == null)
             {
-                return default(TKey);
+                return default;
             }
 
             return (TKey)TypeDescriptor.GetConverter(typeof(TKey)).ConvertFromInvariantString(id);
@@ -136,7 +136,7 @@ namespace Identity.Dapper.Stores
 
             try
             {
-                var result = await _roleRepository.GetByIdAsync(ConvertIdFromString(roleId)).ConfigureAwait(false);
+                var result = await _roleRepository.GetByIdAsync(ConvertIdFromString(roleId), cancellationToken).ConfigureAwait(false);
 
                 return result;
             }
@@ -160,7 +160,7 @@ namespace Identity.Dapper.Stores
 
             try
             {
-                var result = await _roleRepository.GetByNameAsync(normalizedRoleName).ConfigureAwait(false);
+                var result = await _roleRepository.GetByNameAsync(normalizedRoleName, cancellationToken).ConfigureAwait(false);
 
                 return result;
             }
@@ -196,7 +196,7 @@ namespace Identity.Dapper.Stores
                 throw new ArgumentNullException(nameof(role));
             }
 
-            if (role.Id.Equals(default(TKey)))
+            if (role.Id.Equals(default))
             {
                 return string.Empty;
             }
@@ -204,7 +204,9 @@ namespace Identity.Dapper.Stores
             return role.Id.ToString();
         }
 
+#pragma warning disable S4144 // Methods should not have identical implementations
         public async Task<string> GetRoleNameAsync(TRole role, CancellationToken cancellationToken)
+#pragma warning restore S4144 // Methods should not have identical implementations
         {
             cancellationToken.ThrowIfCancellationRequested();
             await CreateTransactionIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
@@ -272,7 +274,7 @@ namespace Identity.Dapper.Stores
             }
         }
 
-        public async Task<IList<Claim>?> GetClaimsAsync(TRole role, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<IList<Claim>?> GetClaimsAsync(TRole role, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             await CreateTransactionIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
@@ -284,7 +286,7 @@ namespace Identity.Dapper.Stores
 
             try
             {
-                var result = await _roleRepository.GetClaimsByRole(role, cancellationToken).ConfigureAwait(false);
+                var result = await _roleRepository.GetClaimsByRoleAsync(role, cancellationToken).ConfigureAwait(false);
 
                 return result?.Select(roleClaim => new Claim(roleClaim.ClaimType, roleClaim.ClaimValue))
                               .ToList();
@@ -299,7 +301,7 @@ namespace Identity.Dapper.Stores
             }
         }
 
-        public async Task AddClaimAsync(TRole role, Claim claim, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task AddClaimAsync(TRole role, Claim claim, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             await CreateTransactionIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
@@ -322,7 +324,7 @@ namespace Identity.Dapper.Stores
             }
         }
 
-        public async Task RemoveClaimAsync(TRole role, Claim claim, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task RemoveClaimAsync(TRole role, Claim claim, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             await CreateTransactionIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
@@ -377,9 +379,9 @@ namespace Identity.Dapper.Stores
             }
         }
 
-        private Task CommitTransactionAsync(CancellationToken cancellationToken = default(CancellationToken))
+        private Task CommitTransactionAsync(CancellationToken cancellationToken = default)
         {
-            if (cancellationToken != default(CancellationToken))
+            if (cancellationToken != default)
             {
                 cancellationToken.ThrowIfCancellationRequested();
             }

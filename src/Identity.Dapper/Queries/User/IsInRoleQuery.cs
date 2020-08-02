@@ -20,9 +20,7 @@ namespace Identity.Dapper.Queries.User
 
         public string GetQuery<TEntity>(TEntity entity)
         {
-            var userProperties = entity.GetColumns(_sqlConfiguration, ignoreIdProperty: true, ignoreProperties: new string[] { "ConcurrencyStamp" });
-
-            var query = _sqlConfiguration.IsInRoleQuery
+            return _sqlConfiguration.IsInRoleQuery
                 .ReplaceQueryParameters(
                     _sqlConfiguration.SchemaName,
                     _sqlConfiguration.UserTable,
@@ -30,12 +28,7 @@ namespace Identity.Dapper.Queries.User
                     new[] { "%ROLENAME%", "%USERID%", },
                     new[] { "RoleName", "UserId", },
                     new[] { "%USERTABLE%", "%USERROLETABLE%", "%ROLETABLE%", },
-                    new[]
-                    {
-                        _sqlConfiguration.UserTable, _sqlConfiguration.UserRoleTable, _sqlConfiguration.RoleTable,
-                    });
-
-            return query;
+                    new[] { _sqlConfiguration.UserTable, _sqlConfiguration.UserRoleTable, _sqlConfiguration.RoleTable, });
         }
     }
 }

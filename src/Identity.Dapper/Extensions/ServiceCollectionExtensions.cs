@@ -3,6 +3,7 @@ using System.Linq;
 using Identity.Dapper.Connections;
 using Identity.Dapper.Cryptography;
 using Identity.Dapper.Entities;
+using Identity.Dapper.Exceptions;
 using Identity.Dapper.Factories;
 using Identity.Dapper.Factories.Contracts;
 using Identity.Dapper.Models;
@@ -171,13 +172,15 @@ namespace Identity.Dapper
                     }
                     else
                     {
-                        throw new Exception("There's no DapperIdentity nor ConnectionStrings section with a connection string configured. Please provide one of them.");
+                        throw new NoDapperIdentityNorConnectionStringsSectionException(
+                            "There's no DapperIdentity nor ConnectionStrings section with a connection string configured. Please provide one of them.");
                     }
                 }
             }
             else
             {
-                throw new Exception("There's no DapperIdentity nor ConnectionStrings section with a connection string configured. Please provide one of them.");
+                throw new NoDapperIdentityNorConnectionStringsSectionException(
+                    "There's no DapperIdentity nor ConnectionStrings section with a connection string configured. Please provide one of them.");
             }
 
             services.AddScoped<IConnectionProvider, T>();
@@ -197,11 +200,11 @@ namespace Identity.Dapper
         {
             Type userStoreType;
             Type roleStoreType;
-            keyType = keyType ?? typeof(int);
-            userRoleType = userRoleType ?? typeof(DapperIdentityUserRole<>).MakeGenericType(keyType);
-            roleClaimType = roleClaimType ?? typeof(DapperIdentityRoleClaim<>).MakeGenericType(keyType);
-            userClaimType = userClaimType ?? typeof(DapperIdentityUserClaim<>).MakeGenericType(keyType);
-            userLoginType = userLoginType ?? typeof(DapperIdentityUserLogin<>).MakeGenericType(keyType);
+            keyType ??= typeof(int);
+            userRoleType ??= typeof(DapperIdentityUserRole<>).MakeGenericType(keyType);
+            roleClaimType ??= typeof(DapperIdentityRoleClaim<>).MakeGenericType(keyType);
+            userClaimType ??= typeof(DapperIdentityUserClaim<>).MakeGenericType(keyType);
+            userLoginType ??= typeof(DapperIdentityUserLogin<>).MakeGenericType(keyType);
 
             userStoreType = typeof(DapperUserStore<,,,,,,>).MakeGenericType(
                 userType,

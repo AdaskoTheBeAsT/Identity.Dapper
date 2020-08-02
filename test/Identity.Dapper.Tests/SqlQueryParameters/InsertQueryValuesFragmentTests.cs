@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 
@@ -23,7 +23,7 @@ namespace Identity.Dapper.Tests.SqlQueryParameters
             }.ToList();
 
             var resultValues = new List<string>();
-            resultValues.InsertQueryValuesFragment("@", new string[] { "\"A\"", "\"B\"", "C", "D" });
+            resultValues.InsertQueryValuesFragment("@", values);
 
             Assert.Equal(expected, resultValues);
         }
